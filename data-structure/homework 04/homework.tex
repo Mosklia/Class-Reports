@@ -1,0 +1,189 @@
+\documentclass{report}
+\usepackage{xeCJK}
+\usepackage[hmargin=1.25in,vmargin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{fontspec}
+\usepackage{xcolor}
+\usepackage[chapter]{minted}
+\usepackage[colorlinks=true,bookmarks=true,bookmarksnumbered=true]{hyperref}
+
+\author{71120226 陈宇轩}
+\title{数据结构 作业四}
+
+\definecolor{mintbg}{rgb}{0.95,0.95,0.95}
+\renewcommand{\listingscaption}{Code}
+
+\setmonofont{WenQuanYi Micro Hei Mono}
+
+\begin{document}
+    \maketitle
+
+    \tableofcontents
+
+    \chapter{P183: 2}
+
+    See code \ref{listing:p1}.
+    
+    \begin{listing}[h]
+        \caption{Delete an arbitary node in Chain}
+        \label{listing:p1}
+        \begin{minted}[linenos=true,autogobble,bgcolor=mintbg]{cpp}
+        /**
+         * Remove an arbitary node in $(*this).
+         * @param pos Address of the node to be removed.
+         * @return Whether pos is in $(*this).
+         */
+        bool Chain::remove(Node *pos)
+        {
+            if (first == pos)
+            {
+                // $first has no previous node
+                first = pos->next;
+                delete pos;
+            }
+            else
+            {
+                // Iterate to find previous node of $pos.
+                for (auto i = first->next; i; i = i->next)
+                {
+                    if (i->next == pos)
+                    {
+                        i->next = pos->next;
+                        delete pos;
+                        break;
+                    }
+                }
+            }
+        }
+        \end{minted}
+    \end{listing}
+
+    Obviously, the time complexity of code \ref{listing:p1} is $O(n)$,
+    where n is the length (number of nodes) of the \verb|Chain|. 
+
+    \chapter{P184: 5}
+
+    See function \verb|merge_with| from code below.
+
+        \begin{minted}[linenos=true,autogobble,bgcolor=mintbg]{cpp}
+            // A helper function. See below.
+            bool compare(Node *n1, Node *n2);
+
+            /**
+             * Merge an ordered Chain with $(*this).
+             * $(*this) must be also ordered.
+             * And operator < of Node::val_type must be defined.
+             * Ordered: assume a is an ordered Chain, then there is no i > j
+             * that a[i] < a[j].
+             * After the mergation, both Chains are empty.
+             * @param other The Chain to be merged.
+             * @return The address of the resulting Chain.
+             */
+            Chain* Chain::merge_with(Chain *other)
+            {
+                Chain *ans = new Chain; // The resulting Chain.
+                Node *cur = nullptr; // Next node to be merged into $(*ans).
+                Node *end = nullptr; // Last node of $(*ans).
+
+                while (this->first || other->first)
+                {
+                    if (compare(this->first, other->first))
+                    // $(this->first) is not empty, and not greater than
+                    // $(other->first)
+                    {
+                        cur = this->first;
+                        this->first = cur->next;
+                    }
+                    else
+                    {
+                        cur = other->first;
+                        other->first = cur->next;
+                    }
+
+                    // Update $(*ans).
+                    if (!ans->first)
+                    {
+                        ans->first = cur;
+                    }
+                    else
+                    {
+                        // $end is not empty.
+                        end->next = cur;
+                    }
+
+                    // Update end.
+                    end = cur;
+                }
+
+                return ans;
+            }
+
+            /**
+             * Comparaing two nodes' val while nullptr is considered.
+             * @param n1 See $n2.
+             * @param n2 Two nodes to be compared.
+             * @return Bool. If n1 != nullptr and n1 is no greater than n2
+             * @return return true.
+             * @return Otherwise return false.
+             */
+            bool compare(Node *n1, Node *n2)
+            {
+                if (!n2)
+                {
+                    return n1 != nullptr;
+                }
+                else
+                {
+                    return (n1 != nullptr) && !(n2->val < n1->val);
+                }
+            }
+
+        \end{minted}
+
+    Obviously, function \verb|compare| is $O(1)$, and in function \verb|merge_with|,
+    we call \verb|compare| $n + m$ times, and each node was inserted to \verb|$(*ans)|
+    exactly once ($n + m$ times in total), so the function \verb|merge_with| is
+    $O(n + m)$ (where $n =$ len(\verb|*this|), $m =$ len(\verb|*other|)).
+
+    \chapter{P184: 5}
+
+    See code \ref{listing:p3}.
+
+    \begin{listing}[h]
+        \caption{Evaluate the expression $\sum\limits_{i=1}^{n-5}(x_i \times x_{i+5})$}
+        \label{listing:p3}
+        \begin{minted}[autogobble,linenos=true,bgcolor=mintbg]{cpp}
+            /**
+             * Evaluate the expression.
+             * Length of $(*this) must be no less than 6.
+             * @return Double. The value of the expression.
+             */
+            double Chain::eval() const
+            {
+                Node *slow = this->first; // x[i]
+                Node *fast = slow; // x[i + 5];
+                double res = 0; // Result of the expression.
+
+                // Initialize $fast.
+                for (int i = 1; i <= 5; ++i)
+                {
+                    fast = fast->next;
+                }
+
+                // Iterate to evaluate.
+                // When $fast is empty, i equals to n - 4.
+                while (fast)
+                {
+                    res += slow->val * fast->val;
+
+                    // Move the iterators forward.
+                    slow = slow->next;
+                    fast = fast->next;
+                }
+
+                return res;
+            } 
+        \end{minted}
+    \end{listing}
+    
+\end{document}

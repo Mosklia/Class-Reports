@@ -5,3 +5,4 @@
 *.toc
 *.synctex.gz
 _minted*
+**/submit/
