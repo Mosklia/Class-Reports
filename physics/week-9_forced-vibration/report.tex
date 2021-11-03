@@ -1,0 +1,131 @@
+\documentclass[12pt]{ctexart}
+\usepackage[hmargin=1.25in,vmargin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{subfig}
+% \usepackage{newtxmath}
+\usepackage[colorlinks=true,bookmarks=true,bookmarksnumbered=true]{hyperref}
+
+\author{71120226 陈宇轩}
+\title{受迫振动\ 实验报告}
+
+\begin{document}
+    \maketitle
+
+    \section{实验目的}
+
+    \begin{itemize}
+        \item 感受，理解受迫振动的特点；
+        \item 了解并熟练操作玻尔共振仪和控制仪；
+        \item 测定电磁阻尼为零时摆轮振幅和振动频率的关系；
+        \item 测定摆轮受迫振动的幅频特性和相频特性曲线，求出阻尼系数。
+    \end{itemize}
+
+    \section{实验原理}
+
+    \paragraph{受迫振动}
+
+    物体在周期性外力（驱动力）的持续作用下进行的振动称为受迫振动。
+
+    受迫振动的振幅 $\theta_b$ 和初相位 $\varphi$ 满足等式 \eqref{align:princ-1}：
+
+    \begin{equation}
+        \begin{gathered}
+            \label{align:princ-1}
+            \theta_b = \frac{m}{\sqrt{(\omega_0^2 - \omega^2)^3 + 4\delta^2\omega^2}} \\
+            \varphi = \arctan \frac{-2\delta\omega}{\omega_0^2 - \omega^2}
+        \end{gathered}
+    \end{equation}
+    
+    \paragraph{共振}
+
+    由极值条件 $\frac{\partial \theta_b}{\partial \omega} = 0$ 可以得出，当驱动力矩的角频率为
+    $\omega = \sqrt{\omega_0^2 - 2 \delta^2}$ 时，受迫振动的振幅达到极大值，产生共振，共振时
+    角频率 $\omega_\mathrm{r}$，振幅 $\theta_\mathrm{r}$ 和相位差 $\varphi_\mathrm{r}$ 满
+    足等式 \eqref{align:princ-2}：
+
+    \begin{equation}
+        \begin{gathered}
+            \label{align:princ-2}
+            \omega_\mathrm{r} = \sqrt{\omega_0^2 - 2\delta^2} \\
+            \theta_\mathrm{r} = \frac{m}{2\delta\sqrt{\omega_0^2 - \delta^2}} \\
+            \varphi_\mathrm{r} = \arctan \left( \frac{-\sqrt{\omega_0^2-2\delta^2}}{\delta} \right)
+        \end{gathered}
+    \end{equation}
+
+    \section{实验器材}
+
+    \section{实验内容}
+
+    \section{实验数据记录}
+
+    \begin{table}[hp]
+        \centering
+        \caption{振幅与振动周期的关系记录表}
+        \label{table:theta-T0}
+        \begin{tabular}{|c|c|}
+            \hline
+            振幅 $\theta$ / degree & 振动周期 $T_0$ / s \\ \hline
+            160.0 & 1.7199 \\ \hline
+            150.0 & 1.7192 \\ \hline
+            139.5 & 1.7185 \\ \hline
+            130.0 & 1.7178 \\ \hline
+            120.0 & 1.7168 \\ \hline
+            110.0 & 1.7159 \\ \hline
+            100.0 & 1.7150 \\ \hline
+            89.5 & 1.7141 \\ \hline
+            80.0 & 1.7129 \\ \hline
+            70.0 & 1.7116 \\ \hline
+            60.0 & 1.7105 \\ \hline
+            50.0 & 1.7094 \\ \hline
+        \end{tabular}
+    \end{table}
+
+
+    \begin{table}[hp]
+        \centering
+        \caption{阻尼时周期内振幅}
+        \label{}
+        \begin{tabular}{|c|c|}
+            \multicolumn{2}{r}{\small 阻尼挡数：1 挡} \\ \hline
+            振幅 $\theta$ / degree & 周期 $T$ / s \\ \hline
+            164.5 & 1.7200 \\ \hline
+            148.5 & 1.7190 \\ \hline
+            134.0 & 1.7181 \\ \hline
+            120.5 & 1.7171 \\ \hline
+            108.5 & 1.7160 \\ \hline
+            98.5 & 1.7150 \\ \hline
+            88.5 & 1.7141 \\ \hline
+            79.0 & 1.7131 \\ \hline
+            71.5 & 1.7122 \\ \hline
+            64.5 & 1.7114 \\ \hline
+        \end{tabular}
+    \end{table}
+
+    \begin{table}[hp]
+        \centering
+        \caption{幅频与相频特性实验数据}
+        \label{table:step3}
+        \begin{tabular}{|c|c|c|c|c|}
+            \multicolumn{5}{r}{\small 阻尼挡数：1 挡} \\ \hline
+            摆轮振幅 $\theta$ / degree & 振动周期 $T$ / s & 对应周期 $T_0$ / s & $\frac{\omega}{\omega_0} = \frac{T_0}{T}$ & 相位差 $\varphi_{\text{测量}}$ \\ \hline
+            60.5 & 1.7732 & & & 30.0  \\ \hline
+            82.5 & 1.7540 & & & 40.0 \\ \hline
+            103.0 & 1.7430 & & & 50.0 \\ \hline
+            120.0 & 1.7360 & & & 60.2 \\ \hline
+            131.0 & 1.7310 & & & 69.8 \\ \hline
+            135.0 & 1.7285 & & & 75.0 \\ \hline
+            140.0 & 1.7260 & & & 80.0 \\ \hline
+            143.0 & 1.7231 & & & 86.0 \\ \hline
+            144.5 & 1.7211 & & & 90.3 \\ \hline
+            145.0 & 1.7191 & & & 94.8 \\ \hline
+            144.3 & 1.7160 & & & 100.8 \\ \hline
+            142.5 & 1.7140 & & & 105.3 \\ \hline
+            139.5 & 1.7111 & & & 110.3 \\ \hline
+            131.5 & 1.7060 & & & 119.4 \\ \hline
+            117.0 & 1.6981 & & & 130.1 \\ \hline
+            102.0 & 1.6891 & & & 139.9 \\ \hline
+            82.0 & 1.6760 & & & 149.8 \\ \hline
+        \end{tabular}
+    \end{table}
+
+\end{document}

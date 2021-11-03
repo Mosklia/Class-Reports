@@ -4,5 +4,5 @@
 *.pdf
 *.toc
 *.synctex.gz
-_minted*
+_*
 **/submit/
