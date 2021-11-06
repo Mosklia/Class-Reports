@@ -1,0 +1,221 @@
+\documentclass[11pt]{ctexrep}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{xcolor}
+\usepackage{fontspec}
+\usepackage[hmargin=1.25in,vmargin=1in]{geometry}
+\usepackage[chapter]{minted}
+\usepackage[colorlinks=true,bookmarks=true,bookmarksnumbered=true]{hyperref}
+
+\definecolor{mintbg}{rgb}{0.95,0.95,0.95}
+\renewcommand{\listingscaption}{源代码}
+
+\ctexset{
+    chapter/name = {第,题}
+}
+
+\setmonofont{WenQuanYi Micro Hei Mono}
+
+\title{数据结构作业五}
+\author{71120226 陈宇轩}
+
+\begin{document}
+    \maketitle
+
+    \tableofcontents
+
+    \chapter{P258: 4}
+
+    \paragraph{解} 对于结点 $i (i \ge 1)$，它的深度 $h = \lfloor \log_d (i + d - 2) \rfloor$，则它所在的行一共有 $d^h$ 个结点，其中有 $i - d^h$ 个结点在其后，它们每个结点会产生 2 个子结点排在 $i$ 的下一排，位于 $i$ 的子结点前面；同时 $i$ 后面有 $d^{h+1} - i - 1$ 个结点在同一排，它们也在 $i$ 的子结点前面。
+    
+    由此，$i$ 的编号最小的子结点为 $i + d^{h+1} - i - 1 + d(i - d^h) + 1 = di$，其他子结点为该子结点编号递增，即 $i$ 的子结点为 $di, di + 1, ..., di + k (k = 0, 1, ..., d-1)$。
+    
+    由上述结论可知 $di$ 到 $di + d - 1$ 的父结点都是 $i$，换句话说，$i$ 的父结点为 $\lfloor \frac{i}{d} \rfloor$。
+
+    这种表示法的缺陷是编号无法为 0，并且需要额外保存树的大小，来确定某个叶子是否存在。
+
+    \chapter{P296: 1}
+
+    \paragraph{解} 找到并移除结点本身不难，难点在于维护子树及父结点之间的关系。我选择简单地将待移除结点的右子树挂载到左子树，而另左子树代替待移除结点。更多细节见下文代码。
+    
+    注意这份代码极其简单，并不考虑维护树的平衡性等内容，多次操作后树可能会退化成为一条链，从而导致每次操作的复杂度提高。
+
+    \begin{minted}[autogobble,linenos=true,bgcolor=mintbg,breaklines=true]{cpp}
+        /**
+         * Helper function.
+         * Find the right-most node of a subtree.
+         * @param root The root of the subtree to be operated on.
+         * @return The right-most node of the tree.
+         */
+        TreeNode *right_most(TreeNode *root)
+        {
+            if (!root || !root->rchild)
+            {
+                return root;
+            }
+            else
+            {
+                return right_most(root->rchild);
+            }
+        }
+
+        /**
+         * Remove a node from a tree, finding by its key.
+         * @param root The root of the tree to be operated on.
+         * @param key The key of the node to be removed.
+         * @return The new node that replaces the removed node.
+         */
+        TreeNode *remove(TreeNode *root, int key)
+        {
+            if (!root)
+            // Not found.
+            {
+                return nullptr;
+            }
+            else if (key < root->key)
+            // Too great.
+            {
+                return remove(root->lchild, key);
+            }
+            else if (root->key < key)
+            // Too small.
+            {
+                return remove(root->rchild, key);
+            }
+            else
+            // Found the node. Remove it.
+            {
+                // Get the new root to mount.
+                auto new_root = root->lchild ? root->lchild : root->rchild;
+
+                // Update the parent info of new root.
+                if (new_root)
+                {
+                    new_root->parent = root->parent; 
+                }
+
+                // Maintain parent info.
+                if (root->parent)
+                {
+                    if (root->parent->lchild == root)
+                    {
+                        root->parent->lchild = new_root;
+                    }
+                    else
+                    {
+                        root->parent->rchild = new_root;
+                    }
+                }
+
+                // If all the children exist, mount the right child to the left child's right-most node's right child.
+                if (root->lchild && root->rchild)
+                {
+                    auto mount_point = right_most(new_root);
+                    mount_point->rchild = root->rchild;
+                    root->rchild->parent = mount_point;
+                }
+
+                // Remove the old root.
+                delete root;
+                return new_root;
+            }
+        }
+    \end{minted}
+
+    关于时间复杂度：本代码的时间复杂度取决于树的形态，正比于树的最大深度。由于多次调用后树很可能会退化成一条链，所以最坏情况下该算法的时间复杂度为 $O(n)$。
+
+    \chapter{P323: 2}
+
+    \paragraph{解} 前序遍历序列和中序遍历序列可以惟一确定一棵树。
+
+    前序遍历序列有以下性质：
+
+    \begin{enumerate}
+        \item 在某一棵完整子树的前序遍历序列中，最靠前的那个结点是整棵子树的根；
+        \item 在某一棵完整子树的前序遍历序列中，最靠后的那个结点是整棵子树最靠右的结点；
+        \item 左子树的遍历序列终点后一个元素一定是右子树遍历序列起点。
+    \end{enumerate}
+
+    中序遍历序列有以下性质：
+
+    \begin{enumerate}
+        \item 在某一棵完整子树的中序遍历序列中，最靠前的那个结点是整棵子树最靠左的结点；
+        \item 在某一棵完整子树的中序遍历序列中，树根把整个序列划分成前后两段，分别对应树的左子树和右子树；
+        \item 在某一棵完整子树的中序遍历序列中，最靠后的那个结点是整棵子树最靠右的结点。
+    \end{enumerate}
+
+    由前序遍历性质 1，我们可以确定确定整棵树的根；然后找到根在中序遍历序列中的位置，利用中序遍历性质 2，提取出左子树的序列和右子树的序列；再查询它们在前序遍历中的顺序，利用前序遍历性质 1，找到它们的根；如此递归下去直到子树只有一个结点（即叶子结点），然后回溯构建整棵树。
+
+    提取序列时，我们可以利用前序遍历序列性质 2 及中序遍历序列性质 3，找到两棵子树在原序列中的起始位置及终末位置。
+
+    以下代码实现了该算法：
+
+    \begin{minted}[autogobble,linenos=true,breaklines=true,bgcolor=mintbg]{cpp}
+        /**
+         * Construct a tree from its postorder sequence and inorder sequence.
+         * You are not expected to fully understand this.
+         * I recommend you to draw a graph while reading this code.
+         * @param post_begin Beginning of postorder sequence.
+         * @param post_end Ending of postorder sequence.
+         * @param in_begin Beginning of inorder sequence.
+         * @param in_end Ending of inorder sequence.
+         * @param post_ord Array of the pointers that point to the elems in the postorder sequence. e.g. *post_ord[i] = i;
+         * @param in_ord Array of the pointers that point to the elems in the inorder sequence. e.g. *in_ord[i] = i;
+         * @return The root of the tree constructed from given sequences.
+         */
+        TreeNode *build_tree(
+            int *post_begin, int *post_end,
+            int *in_begin, int *in_end,
+            int *post_ord[],
+            int *in_ord[]
+        )
+        {
+            // Root of the tree to construct.
+            // Note that *post_begin is the root of the tree to construct.
+            TreeNode *res = new TreeNode(*post_begin, nullptr, nullptr);
+
+            // Given sequences describe a leaf.
+            if (post_begin == post_end)
+            {
+                return res;
+            }
+
+            int *in_root_pos = in_ord[*post_begin]; // Position of root in the inorder sequence.
+            int *post_lchild_end = post_ord[*(in_root_pos - 1)]; // Position of left subtree's ending in the postorder sequence.
+
+            // Construct left subtree.
+            if (post_lchild_end != post_begin)
+            {
+                res->lchild = build_tree(post_begin + 1, post_lchild_end, in_begin, in_root_pos - 1, post_ord, in_ord);
+            }
+
+            // Construct right subtree.
+            if (in_root_pos != in_end)
+            {
+                res->rchild = build_tree(post_lchild_end + 1, post_end, in_root_pos + 1, in_end, post_ord, in_ord);
+            }
+
+            return res;
+        }
+    \end{minted}
+
+    \chapter{P323: 4}
+
+    \paragraph{解} 通过中序遍历序列和层次遍历序列可以唯一确定一棵二叉树。
+
+    中序遍历序列有以下性质：
+
+    \begin{enumerate}
+        \item 左子树的结点总在树根的前面；
+        \item 树根总在右子树结点的前面。
+    \end{enumerate}
+
+    层次遍历序列有以下性质：
+
+    \begin{enumerate}
+        \item 树根总在子结点前面。
+    \end{enumerate}
+
+    由此，对于任意一棵子树，我们可以通过层次遍历序列确定它的根，再通过划分中序遍历序列得到左右子树结点的列表，再利用层次遍历序列找到子树的根...如此反复，直到所有子树都被构建完成，则整棵树唯一构建完毕。
+\end{document}
