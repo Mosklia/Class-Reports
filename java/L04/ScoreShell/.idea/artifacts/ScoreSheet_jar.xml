@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="ScoreSheet:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ScoreSheet_jars</output-path>
+    <root id="archive" name="ScoreSheet.jar">
+      <element id="module-output" name="ScoreSheet" />
+    </root>
+  </artifact>
+</component>
