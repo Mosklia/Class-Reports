@@ -12,3 +12,5 @@ _*
 *.vrb
 **/out/
 *.iml
+*.bbl
+*.blg
