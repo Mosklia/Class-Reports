@@ -1,0 +1,175 @@
+\documentclass{ctexrep}
+\usepackage[chapter]{minted}
+\usepackage{xcolor}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage[hmargin=1.25in,vmargin=1in]{geometry}
+\usepackage[colorlinks=true,bookmarks=true,bookmarksnumbered=true]{hyperref}
+
+\setmonofont{WenQuanYi Micro Hei Mono}
+\ctexset{
+    chapter/name = {第,题}
+}
+\definecolor{mintbg}{rgb}{0.95,0.95,0.95}
+\renewcommand{\listingscaption}{源代码}
+
+\author{71120226 陈宇轩}
+\title{数据结构作业六}
+
+\begin{document}
+    \maketitle
+
+    \tableofcontents
+
+    \chapter{P339: 2}
+
+    \paragraph{(a)小问} 见表 \ref{table:p1_1}。
+
+    \begin{table}[hp]
+        \centering
+        \caption{第 1 题：结点度数表}
+        \label{table:p1_1}
+        \begin{tabular}{|*{7}{c|}}
+            \hline
+            结点 & 0 & 1 & 2 & 3 & 4 & 5 \\ \hline
+            入度 & 3 & 2 & 1 & 1 & 2 & 2 \\ \hline
+            出度 & 0 & 2 & 2 & 3 & 1 & 3 \\ \hline
+        \end{tabular}
+    \end{table}
+
+    \paragraph{(b)小问} 见表 \ref{table:p1_2}。
+
+    \begin{table}[hp]
+        \centering
+        \caption{第 1 题：邻接矩阵}
+        \label{table:p1_2}
+        \begin{tabular}{|*{7}{c|}}
+            \hline
+              & 0 & 1 & 2 & 3 & 4 & 5 \\ \hline
+            0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
+            1 & 1 & 0 & 0 & 0 & 0 & 0 \\ \hline
+            2 & 0 & 1 & 0 & 0 & 0 & 1 \\ \hline
+            3 & 0 & 0 & 1 & 0 & 1 & 1 \\ \hline
+            4 & 1 & 0 & 0 & 0 & 0 & 0 \\ \hline
+            5 & 1 & 1 & 0 & 0 & 1 & 0 \\ \hline
+        \end{tabular}
+    \end{table}
+
+    \paragraph{(c)小问} 见表 \ref{table:p1_3}。
+
+    \begin{table}[hp]
+        \centering
+        \caption{第 1 题：邻接表}
+        \label{table:p1_3}
+        \subfloat[点表]{
+            \begin{tabular}{|*{7}{c|}}
+                \hline
+                索引 & 0 & 1 & 2 & 3 & 4 & 5 \\ \hline
+                \mintinline{text}{head} & 0 & 2 & 4 & 7 & 8 & 11 \\ \hline
+            \end{tabular}
+        }
+        \\
+        \subfloat[边表]{
+            \begin{tabular}{|*{12}{c|}}
+                \hline
+                索引 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 \\ \hline
+                \mintinline{text}{to} & 0 & 3 & 1 & 5 & 2 & 4 & 5 & 0 & 0 & 1 & 4 \\ \hline
+                \mintinline{text}{next} & 0 & 1 & 0 & 3 & 0 & 5 & 6 & 0 & 0 & 9 & 10 \\ \hline
+            \end{tabular}
+        }
+    \end{table}
+
+    \paragraph{(d)小问} 见表 \ref{table:p1_4}。
+
+    \begin{table}[hp]
+        \centering
+        \caption{第 1 题：邻接表}
+        \label{table:p1_4}
+        \subfloat[点表]{
+            \begin{tabular}{|*{7}{c|}}
+                \hline
+                索引 & 0 & 1 & 2 & 3 & 4 & 5 \\ \hline
+                \mintinline{text}{head_from} & 0 & 2 & 4 & 7 & 8 & 11 \\ \hline
+                \mintinline{text}{head_to} & 9 & 10 & 5 & 2 & 11 & 7 \\ \hline
+            \end{tabular}
+        }
+        \\
+        \subfloat[边表]{
+            \begin{tabular}{|*{12}{c|}}
+                \hline
+                索引 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 \\ \hline
+                \mintinline{text}{from} & 1 & 1 & 2 & 2 & 3 & 3 & 3 & 4 & 5 & 5 & 5 \\ \hline
+                \mintinline{text}{to} & 0 & 3 & 1 & 5 & 2 & 4 & 5 & 0 & 0 & 1 & 4 \\ \hline
+                \mintinline{text}{next_from} & 0 & 1 & 0 & 3 & 0 & 5 & 6 & 0 & 0 & 9 & 10 \\ \hline
+                \mintinline{text}{next_to} & 0 & 0 & 0 & 0 & 0 & 0 & 5 & 1 & 2 & 3 & 6 \\ \hline
+            \end{tabular}
+        }
+    \end{table}
+
+    \paragraph{(e)小问} 共有 3 组强连通分量：\{0\}，\{1, 2, 3, 5\} 与 \{4\}。
+
+    \chapter{P372: 1}
+
+    \paragraph{思路} 从树根开始向叶子搜索，每搜索到一个子结点就将其距离设为亲代结点到根的距离加上边长。
+    最终可以计算出每个结点到根的距离。原因：树上任意两点之间有且只有一条路径（不允许反复经过一条边），
+    而反复经过一条边不会令路径长度减小，因此从根 DFS 到结点的路径必为最短路。
+
+    \paragraph{代码} 见源代码 \ref{listing:p2}。
+
+    \begin{listing}[hp]
+        \centering
+        \caption{求树上路径长度}
+        \label{listing:p2}
+        \begin{minted}[autogobble,linenos=true,breaklines=true,bgcolor=mintbg]{cpp}
+            /**
+             * @brief 求树根到其他所有点的路径长度。
+             * 结果存在 v[x].dist 中，v 是保存结点信息的数组，x 是对应结点编号。
+             * 假设图以邻接单表形式存储在 v（点表） 和 e（边表）中。
+             *
+             * @param p 当前访问的结点。
+             * @param f 当前结点 p 的亲代结点。对于树根，f 可取任意不在树中的结点编号。
+             */
+            void get_dist(int p, int f)
+            {
+                for (int i = v[p].head; i; i = e[i].next)
+                {
+                    // 当前边 i 的终点
+                    int cur = e[i].to;
+
+                    if (cur == f)
+                    {
+                        continue;
+                    }
+
+                    v[cur].dist = v[p].dist + e[i].weight;
+                    get_dist(cur, p);
+                }
+            }
+        \end{minted}
+    \end{listing}
+
+    \chapter{P389: 2}
+
+    \paragraph{(a)小问} 见表 \ref{table:p3_cal}
+
+    \begin{table}[hp]
+        \centering
+        \caption{第 3 题计算表}
+        \label{table:p3_cal}
+        \begin{tabular}{|*{11}{c|}}
+            \hline
+            $x$    & 0 & 1 & 2 & 3  & 4  & 5  & 6  & 7  & 8  & 9 \\ \hline
+            $e(x)$ & 0 & 5 & 6 & 12 & 15 & 16 & 16 & 19 & 21 & 23 \\ \hline
+            $l(x)$ & 0 & 9 & 6 & 12 & 15 & 19 & 16 & 19 & 21 & 23 \\ \hline
+        \end{tabular}
+    \end{table}
+
+    \paragraph{(b)小问} 最短用时为 23。
+
+    一条最长路：\{ $0 \rightarrow 2 \rightarrow 3 \rightarrow 6 \rightarrow 8 \rightarrow 9$ \}。
+
+    \paragraph{(c)小问} Critical activities: 0, 2, 3, 4, 6, 7, 8 和 9。
+
+    \paragraph{(d)小问} 0，2，3，8 四个活动的提速都能提速整个任务。
+\end{document}
