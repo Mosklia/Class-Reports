@@ -1,0 +1,54 @@
+\documentclass{ctexart}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage[hmargin=1.25in,vmargin=1in]{geometry}
+
+\author{71120226 陈宇轩}
+\title{数据结构作业\ 第一周}
+\ctexset{
+    section/name = {第,题}
+}
+
+\begin{document}
+    \maketitle
+
+    \section{证明性质：}
+
+    \subsection{$O(f) + O(g) = O(f + g)$}
+
+    \begin{proof}
+        % \centering
+        设 $F(N) = O(f), G(N) = O(g)$，根据符号 $O$ 的定义，存在正常数 $C_1, C_2$，自然数 $N_1, N_2$，$s.t.$
+        \[
+            \begin{aligned}
+                \forall n_1 &\geq N_1, F(n_1) \leq C_1f(n_1) \\
+                \forall n_2 &\geq N_2, G(n_2) \leq C_2g(n_2) 
+            \end{aligned}
+        \]
+        令 $N = \max\{N_1, N_2\}, C = \max\{C_1, C_2\}$，则
+        \[
+            \forall n \geq N, F(n) + G(n) \leq C_1f(n) + C_2g(n) \leq C[f(n) + g(n)] = C[(f + g)(n)]
+        \]
+        即 $O(f) + O(g) = F(N) + G(N) \leq C[(F + G)(N)] = O(f + g)$。
+    \end{proof}
+
+    \subsection{$O(f) \cdot O(g) = O(f \cdot g)$}
+
+    \begin{proof}
+        % \centering
+        设 $F(N) = O(f), G(N) = O(g)$，根据符号 $O$ 的定义，存在正常数 $C_1, C_2$，自然数 $N_1, N_2$，$s.t.$
+        \[
+            \begin{aligned}
+                \forall n_1 &\geq N_1, F(n_1) \leq C_1f(n_1) \\
+                \forall n_2 &\geq N_2, G(n_2) \leq C_2g(n_2) 
+            \end{aligned}
+        \]
+        令 $N = \max\{N_1, N_2\}, C = N_1 \cdot N_2$，则
+        \[
+            \forall n \geq N, F(n) \cdot G(n) \leq C_1f(n) \cdot C_2g(n) = C[f(n) \cdot g(n)] = C[(f \cdot g)(n)]
+        \]
+        即 $O(f) \cdot O(g) = F(N) \cdot G(N) \leq C[(F \cdot G)(N)] = O(f \cdot g)$。
+    \end{proof}
+\end{document}
