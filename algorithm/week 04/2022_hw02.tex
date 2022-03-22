@@ -1,0 +1,209 @@
+% \documentclass[12pt,a4paper]{article}
+\documentclass[12pt,a4paper]{ctexart}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+% \usepackage{CJK}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+% \usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+
+\theoremstyle{definition}
+\newtheorem*{solution}{解}
+\newtheorem*{answer}{答}
+
+% Setting for algorithm display
+\SetStartEndCondition{ }{}{}%
+\SetKwProg{Fn}{}{}{}
+\SetKwFunction{Range}{range}%%
+\SetKw{KwTo}{in}
+\SetKwFor{For}{for}{\string:}{}%
+\SetKwIF{If}{ElseIf}{Else}{if}{}{elseif}{else}{}%
+\SetKwFor{While}{while}{}{fintq}%
+\SetKw{Return}{return}
+% \renewcommand{\forcond}{$i$ \KwTo\Range{$n$}}
+% Setting for algorithm display end
+
+\begin{document}
+% \begin{CJK}{UTF8}{song}
+
+\title{
+{\heiti《算法分析与设计》第 $2$ 次作业
+\footnote{要求：1、分析题请用书面化语言给出详细分析过程。}
+}
+}
+\date{}
+
+\author{
+    姓名：\underline{陈宇轩}~~~~~~
+    学号：\underline{71120226}~~~~~~
+    成绩：\underline{~~~~~~~~~~~~~~~~~~}
+}
+
+\maketitle
+
+\noindent
+\section*{\bf \color{red}{算法分析题}}
+
+\noindent
+{\bf 题目1：}求以下递推关系。
+\begin{enumerate}
+    \item[(1)]  $T(n)=4T(n/2)+n^{2}\log_{2}{n}$
+    \item[(2)]  $T(n)=2T(\sqrt{n})+\log_{2}{n}$
+\end{enumerate}
+
+\vspace{5pt}
+\noindent
+% {\bf 答：}
+% \begin{proof}
+    
+% \end{proof}
+\begin{solution}
+    (1) 令 $n = 2^k$，则可得：
+    \begin{align*}
+        T(2^k) &= 4^1 T(2^{k-1}) + k2^{2k} \\
+        &= 4^2 T(2^{k-2}) + k4^k + (k-1)4^k \\
+        &= \cdots \\
+        &= 4^k T(1) + \sum_{i=1}^{k}i4^k \\
+        &= 2^{2k} + \frac{k(k+1)2^{2k}}{2} \\
+        &= \Theta((k2^k)^2) 
+    \end{align*}
+    将 $k = \log_2 n$ 代回即得：
+    \[
+        T(n) = \Theta(n^2\log^2_2n)
+    \]
+
+    (2) 令 $n = 2^{2^k}$，则可得：
+    \begin{align*}
+        T(2^{2^k}) &= 2T(2^{2^{k-1}}) + 2^k \\
+        &= 2^2T(2^{2^{k-2}}) + 2^k + 2^k \\
+        &= \cdots \\
+        &= 2^kT(2) + k2^k \\
+        &= \Theta(k2^k)
+    \end{align*}
+    将 $k = \log_2 \log_2 k$ 代回即得：
+    \[
+        T(n) = \Theta(\log_2k \cdot \log_2\log_2k)
+    \]
+\end{solution}
+
+\begin{answer}
+    \begin{enumerate}
+        \item[(1)] $T(n) = \Theta(n^2\log^2_2n)$;
+        \item[(2)] $T(n) = \Theta(\log_2k \cdot \log_2\log_2k)$.
+    \end{enumerate}
+\end{answer}
+
+\vspace{10pt}
+\noindent
+{\bf 题目2：}用分治法设计一个算法同时找出数组$A[1..n]$中的最大和第二大的数，$n\geq2$，并分析所需的比较次数（请写出关键思路或伪代码）。
+
+\vspace{5pt}
+\noindent
+\begin{solution}
+    如算法 \ref{algo:t2} 所示。
+    \begin{algorithm}[hb]
+        \label{algo:t2}
+        \SetAlgoNoLine
+        \AlgoDontDisplayBlockMarkers
+        \SetAlgoNoEnd
+        \caption{分治法寻找前二大的两个数}
+        \SetKwFunction{BProcess}{BINARY-PROCESS}
+        \Fn{\BProcess{A}}{
+            \KwIn{The array $A$[1..n]}
+            \KwOut{A pair of 2 numbers, ($fst$, $sed$), that stands for the first- and second-greatest value in the array $A$}
+            \If{$A.length$ = 1} {
+                \Return ($A[1]$, $-\infty$) \\
+            }
+            \ElseIf{$A.length$ = 2} {
+                \Return ($\max\{A[1], A[2]\}$, $\min\{A[1], A[2]\}$) \\
+            }
+            $mid$ = $\lfloor(1 + A.length) / 2\rfloor$ \\
+            $result_\mathrm{left}$ = \BProcess{$A[1..mid]$} \\
+            $result_\mathrm{right}$ = \BProcess{$A[mid+1..A.length]$} \\
+            \tcc{Maximum value only exists in \{$result_\mathrm{left}$[1], $result_\mathrm{right}$[1]\}}
+            $fst$ = $\max\{result_\mathrm{left}[1], result_\mathrm{right}[1]\}$ \\
+            $sed$ = $\max\{\min\{result_\mathrm{left}[1], result_\mathrm{right}[1]\}, \max\{result_\mathrm{left}[2], result_\mathrm{right}[2]\}\}$ \\
+            \Return ($fst$, $sed$)
+        }
+    \end{algorithm}
+\end{solution}
+
+
+\vspace{10pt}
+\noindent
+{\bf 题目3：}设$A$和$B$是两个$n \times n$矩阵。众所周知，计算其乘积$C=AB$通常需要做$\Theta(n^{3})$乘法和加法。基于分治法的$Strassen$算法可以改进这个复杂度。下面是这个算法。为简化起见，我们假设$n=2^{k}$。 \\
+{\bf Strassen's algorithm (A, B, n)}
+\begin{enumerate}
+    \item[(a)]  将$A$和$B$各自划分为4个$n/2 \times n/2$ 的矩阵，如下。\\
+        $$
+            A=
+            \begin{bmatrix}
+                A_{11} & A_{12} \\
+                A_{21} & A_{22}
+            \end{bmatrix}
+            ,
+            \qquad \qquad
+            B=
+            \begin{bmatrix}
+                B_{11} & B_{12} \\
+                B_{21} & B_{22}
+            \end{bmatrix}
+        $$
+    \item[(b)]  按下面公式递归计算出7个$n/2 \times n/2$ 的矩阵。
+        \begin{align*}
+             & P=(A_{11}+A_{22})(B_{11}+B_{22}); \\
+             & Q=(A_{21}+A_{22})B_{11};          \\
+             & R=A_{11}(B_{12}-B_{22});          \\
+             & S=A_{22}(B_{21}-B_{11});          \\
+             & T=(A_{11}+A_{22})B_{22};          \\
+             & U=(A_{21}-A_{11})(B_{11}+B_{12}); \\
+             & V=(A_{12}-A_{22})(B_{21}+B_{22});
+        \end{align*}
+    \item[(c)]  按下面公式计算出4个$n/2 \times n/2$ 的矩阵。
+        \begin{align*}
+             & C_{11}=P+S-T+V; \\
+             & C_{12}=R+T;     \\
+             & C_{21}=Q+S;     \\
+             & C_{22}=P+R-Q+U;
+        \end{align*}
+    \item[(d)]  输出结果如下。\\
+        $$
+            C=AB=
+            \begin{bmatrix}
+                C_{11} & C_{12} \\
+                C_{21} & C_{22}
+            \end{bmatrix}
+        $$
+\end{enumerate}
+请分析$Strassen$算法的复杂度。不必证明其正确性。
+
+\vspace{5pt}
+\noindent
+\begin{solution}
+    对于规模为 $n = 2^k$ 的方阵而言，Strassen 算法需要调用 $7$ 次规模为 $\frac{n}{2} = 2^{k-1}$ 的矩阵乘法，以及 $18$ 次规模相同的矩阵加法，
+    故可知：
+
+    \begin{align*}
+        T(n) &= 7T(\frac{n}{2})+18(n-1)^2 \\
+        &= 7T(\frac{n}{2})+18n^2-36n+18 \\
+        &= 7T(\frac{n}{2})+O(n^2)
+    \end{align*}
+
+    令$a = 7, b = 2$，取 $\varepsilon = \log_2 7 - 2 > 0$，则 $f(n) = O(n^{\log_b a - \varepsilon})$，由主定理知，
+    \[
+        T(n) = \Theta(n^{\log_b a}) = \Theta(n^{\log_2 7})
+    \]
+\end{solution}
+\begin{answer}
+        $T(n) = \Theta(n^{\log_2 7})$
+\end{answer}
+
+% \end{CJK}
+\end{document}

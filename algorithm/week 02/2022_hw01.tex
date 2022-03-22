@@ -1,0 +1,121 @@
+\documentclass[12pt,a4paper]{ctexart}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+% \usepackage{CJK}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+% \usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage[colorlinks=true,bookmarks=true,bookmarksnumbered=true]{hyperref}
+
+\renewcommand{\theenumi}{(\arabic{enumi})}
+
+\begin{document}
+% \begin{CJK}{UTF8}{song}
+
+\title{
+  {
+    \heiti《算法分析与设计》第 {1} 次作业
+    \footnote{要求：1、分析题请用书面化语言给出详细分析过程。}
+  }
+}
+\date{}
+
+\author{
+姓名：\underline{陈宇轩}~~~~~~
+学号：\underline{71120226}~~~~~~
+成绩：\underline{~~~~~~~~~~~~~~~~~~}
+}
+
+\maketitle
+
+\noindent
+\section*{\bf \color{red}{算法分析题}}
+
+\noindent
+{\bf 题目1：}求下列函数的$\Theta$渐进表达式
+\begin{enumerate}
+  \item[(1)]  $n^2/10+2^n$
+  \item[(2)]  $21+1/n$
+  \item[(3)]  $10\log{}{3^n}$
+\end{enumerate}
+
+\vspace{5pt}
+\noindent
+{
+  \textbf{答：}
+
+  (1) 取 $C_1 = 1, C_2 = 1000$，则当 $n \geq 1$ 时，显然有 $C_1 \cdot 2^n \leq n^2/10+2^n \leq C_2 \cdot 2^n$，即 $C_1 \cdot 2^n \leq T(n) \leq C_2 \cdot 2^n$；
+      故函数 $n^2/10+2^n$ 的渐进表达式 $n^2/10+2^n = \Theta(2^n)$。
+
+  (2) 取 $C_1 = 21, C_2 = 22, f(n) = 1$，则当 $n \geq 1$ 时，$C_1f(n) = 21 \leq 21 + \frac{1}{n} \leq 22 = C_2f(n)$，即 $C_1f(n) \leq T(n) \leq C_2f(n)$；
+      故函数 $21 + \frac{1}{n}$ 的渐进表达式为 $21 + \frac{1}{n} = \Theta(1)$。
+
+  (3) $T(n) = 10 \log{3^n} = (10 \log3) n$，故令 $C_1 = \log3, C_2 = 100\log3, f(n) = n$，则当 $n \geq 1$ 时有 $C_1 \leq 10\log3 \leq C_2$，可得 $C_1n \leq (10\log3)n \leq C_2n$，即$C_1f(n) \leq T(n) \leq C_2f(n)$，
+      故函数 $10\log{}{3^n}$ 的渐进表达式为 $10\log{}{3^n} = \Theta(n)$。
+}
+
+
+\vspace{10pt}
+\noindent
+{\bf 题目2：}对以下每个级数和$T(n)$，用$\Theta$记号表示与其同阶的只含一项的函数。
+\begin{enumerate}
+  \item[(1)]  $T(n)=\sum\limits_{k=1}^n\frac{k^3\lg k+1}{k^2+k+1}$
+  \item[(2)]  $T(n)=\sum\limits_{k=1}^n\frac{\sqrt{k}+k\lg k+8}{3k^2\lg k+5k+1}$
+\end{enumerate}
+
+\vspace{5pt}
+\noindent
+{
+  \textbf{答：}
+
+  (1) $T(n)=\sum\limits_{k=1}^n\frac{k^3\lg k+1}{k^2+k+1} = \sum\limits_{k=1}^n(\frac{k^3\lg k}{k^2+k+1}+\frac{1}{k^2+k+1}) = \sum\limits_{k=1}^n\frac{k^3\lg k}{k^2+k+1}+\sum\limits_{k=1}^n\frac{1}{k^2+k+1}$
+}
+
+
+\vspace{10pt}
+\noindent
+{\bf 题目3：}用$\Theta$记号表示程序\ref{algo:t3}中语句$x \gets x+1$被执行的次数的估计.
+\begin{algorithm}[h]
+\caption{一个算法实例}
+\label{algo:t3}
+\For{i=1 \emph{\KwTo} n}{
+    \For{j=i \emph{\KwTo} 3i}{
+    $x \gets x+1$\;
+    }
+	}
+\end{algorithm}
+
+\vspace{5pt}
+\noindent
+{
+  \textbf{答：}
+  易知语句 $x \gets x+1$ 的执行次数为：
+  \begin{align*}
+      T(n) &= \sum_{i=1}^{n} \sum_{j=i}^{3i} 1 \\
+           &= \sum_{i=1}^{n} 2i \\
+           &= n^2 + n
+  \end{align*}
+
+  令 $C_1 = 1, C_2 = 2, f(n) = n^2$，则当 $n \geq 1$ 时，有 $0 \leq n \leq n^2$。在不等式各项加上一个 $n^2$，得
+
+  \[
+    1 \cdot n^2 \leq n^2 + n \leq 2 \cdot n^2
+  \]
+
+  即
+
+  \[
+    C_1 \cdot f(n) \leq T(n) \leq C_2 \cdot f(n)
+  \]
+
+  故语句 $x \gets x+1$ 的执行次数为 $T(n) = \Theta(n^2)$。
+}
+
+% \end{CJK}
+\end{document} 
