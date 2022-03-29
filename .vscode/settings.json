@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "stat.h": "c",
+        "fcntl.h": "c",
+        "stdio.h": "c",
+        "unistd.h": "c",
+        "errno.h": "c",
+        "*.tcc": "c",
+        "complex": "c",
+        "fstream": "c",
+        "system_error": "c"
+    }
+}
