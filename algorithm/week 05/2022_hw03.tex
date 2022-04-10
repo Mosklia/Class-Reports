@@ -1,0 +1,330 @@
+\documentclass[12pt,a4paper]{ctexart}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+% \usepackage{CJK}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+% \usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage[indLines=false,beginComment=//~,beginLComment=//~,endLComment=]{algpseudocodex}
+\usepackage{algorithm}
+\usepackage{fancyhdr}
+% \usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{diagbox}
+\usepackage[xetex,colorlinks=true]{hyperref}
+
+% \tikzset{algpxIndentLine/.style={draw=white}}
+
+\algnewcommand{\To}{\textbf{to} }
+\algnewcommand{\DownTo}{\textbf{downto} }
+
+\begin{document}
+% \begin{CJK}{UTF8}{song}
+
+\title{
+  {\heiti《算法分析与设计》第 {$3$} 次作业
+    \footnote{要求：1、分析题请用书面化语言给出详细分析过程。}
+    }
+}
+\date{}
+
+\author{
+姓名：\underline{陈宇轩}~~~~~~
+学号：\underline{71120226}~~~~~~
+成绩：\underline{~~~~~~~~~~~~~~~~~~}
+}
+
+\maketitle
+
+\noindent
+\section*{\bf \color{red}{算法分析题}}
+
+\noindent
+{\bf 题目1：}一个字符串中的连续的一段字符序列称为该字符串的一个子串。例如$school$中$cho$就是一个子串。子串和子序列的区别是，子序列在原序列中的位置不一定连续，而子串必须连续。两个字符串都含有的子串称为它们的公共子串。例如，$university$和$anniversary$就含有许多公共子串，例如$ni,niv,y,er$等，但最长的 一个是$nivers$。假设有字符串$X=x_1x_2...x_n$和$Y=y_1y_2...y_m$，请设计一个基于动态规划的$O(mn)$算法来找出$X$和$Y$的最长公共子串。（要写出最长公共子串在字符串$X$的起止位置 ）
+
+\textbf{解：} 设状态 $f[i, j]$ 表示以 $X[i], Y[j]$ 为结尾的公共子串的最大长度，则状态转移方程如下：
+
+\begin{align*}
+  f[i, j] = \begin{cases}
+    f[i - 1, j - 1] + 1, & X[i] = Y[j] \\
+    0, & \text{otherwise}
+  \end{cases}
+\end{align*}
+
+迭代计算以上各状态的值，同时更新答案即可。
+
+\vspace{5pt}
+\noindent
+{\bf 答：}见算法 \ref{algo:t1}。
+
+\begin{algorithm}
+  \caption{寻找最长公共子串}\label{algo:t1}
+  \begin{algorithmic}[1]
+    \Require 两个字符串 $X, Y$，字符集有限
+    \Ensure 一个有序整数三元组$(posX, posY, len)$，表示 $X, Y$ 的最长公共子串在 $X$ 与 $Y$ 的起始位置及长度
+    \Function{FindLongestCommonSubstr}{$X, Y$}
+      \LComment {初始化答案计数器}
+      \State $posX \gets 0$
+      \State $posY \gets 0$
+      \State $len \gets 0$
+      \LComment {初始化边界条件}
+      \For {$i \gets 1$ \To $X.length$}
+        \State $f[i, 1] \gets X[i] = Y[1]$ ? $1$ : $0$
+        \State \Call {UpdateAnswer}{$i, 1$}
+      \EndFor
+      \For {$i \gets 2$ \To $Y.length$}
+        \State $f[1, i] \gets X[1] = Y[i]$ ? $1$ : $0$
+        \State \Call {UpdateAnswer}{$1, i$}
+      \EndFor
+      \LComment {迭代计算}
+      \For {$i \gets 2$ \To $X.length$}
+        \For {$j \gets 2$ \To $Y.length$}
+          \If {$X[i] = Y[j]$}
+            \State $f[i, j] \gets f[i - 1, j - 1] + 1$
+          \Else
+            \State $f[i, j] \gets 0$
+          \EndIf
+          \State \Call {UpdateAnswer}{$i, j$}
+        \EndFor
+      \EndFor
+      \State \Return ($posX, posY, len$)
+      \Statex
+      \LComment {辅助过程，更新答案}
+      \Procedure{UpdateAnswer}{$i,j$}
+        \If {$f[i, j] > len$}
+          \State $posX \gets i$
+          \State $posY \gets j$
+          \State $len \gets f[i, j]$
+        \EndIf
+      \EndProcedure
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\clearpage
+
+\vspace{10pt}
+\noindent
+{\bf 题目2：}顺序放好的$n$根钢管的重量各为$W[i], 1 \leq i \leq n$。
+我们需要把它们依照顺序焊成一根钢管，但每次焊接可任意选两根相邻的钢管来焊接。每次焊接的代价与被焊两段钢管中的较重的一根的重量成正比。为简单起见，就把代价定为被焊两段钢管中的较重的一根的重量。例如，$W[1]=5, W[2]=1, W[3]=2, $ 如果先把$W[1]$和$W[2]$焊好，代价为$5$，再把$W[3]$上，又要代价$6$，总代价是$11$。但如果先焊$W[2]$和$W[3]$，再焊$W[1]$，则总代价为$2+5=7$。
+\begin{enumerate}
+  \item[(a)]  用动态规划的方法设计一个算法计算出最优的焊接顺序，使总代价最小。
+  \item[(b)]  应用你上面的算法求出一下$5$根钢管的最优焊接顺序和总代价：$W[1]=6, W[2]=2, W[3]=7. W[4]=5, W[5]=8$。
+\end{enumerate}
+
+\textbf{解：} 典型的区间 DP。设状态 $f[i, j]$ 表示“将区间 $[i, j]$ 的全部钢管焊接到一起的最小代价”，则状态转移方程为：
+
+\begin{equation}
+  f[i, j] = \min_{k=i,i+1,i+2...j-1}\{f[i, k] + f[k + 1, j] + \max\{\sum_{o=1}^kW[o], \sum_{o=k+1}^jW[o]\}\} \label{formula:t2}
+\end{equation}
+
+迭代计算即可。注意计算中应当按照区间长度（即 $j-i$ 的大小）作为第一关键字升序迭代，并且可以利用前缀和来降低求 $\sum W[o]$ 带来的时间复杂度升高。
+
+\vspace{5pt}
+\noindent
+{\bf 答：} (a) 见算法 \ref{algo:t2}；
+
+\begin{algorithm}
+  \caption{合并钢管} \label{algo:t2}
+  \begin{algorithmic}[1]
+    \Require 一个非负数列 $W[1..n]$，表示各钢管的重量。
+    \Ensure 一个非负整数 $res$，表示将所有钢管焊接的总代价。
+    \Function {WeldPipes}{$W[1..n]$}
+      \LComment {求前缀和数组 $sum[1..n]$，即 $sum[i] = \sum_{k=1}^iW[k]$}
+      \State $sum[1] \gets W[1]$
+      \For {$i \gets 2$ \To $n$}
+        \State $sum[i] \gets sum[i - 1] + W[i]$
+      \EndFor
+      \LComment {初始化动态规划数组 $f[1..n][1..n]$}
+      \For {$i \gets 1$ \To $n$}
+        \For {$j \gets 1$ \To $n$}
+          \State $f[i][j] \gets i = j$ ? 0 : $+\infty$
+        \EndFor
+      \EndFor
+      \LComment {迭代计算}
+      \For {$k \gets 1$ \To $n - 1$} \Comment {区间长度 $-1$，对应式 \eqref{formula:t2} 的 $j-i$}
+        \For {$i \gets 1$ \To $n - k$} \Comment {区间起点，对应式 \eqref{formula:t2} 的 $i$}
+          \For {$j \gets i$ \To $i + k - 1$} \Comment {区间断点，对应式 \eqref{formula:t2} 的 $k$}
+            \LComment{$cost$: 本次划分中更重的那个子段的重量}
+            \State $cost \gets \max\{$ \Call {SegWeight}{$i,j$}, \Call {SegWeight}{$j+1,i+k$} $\}$ 
+            \State $f[i][i + k] \gets \min\{f[i][i + k], f[i][j] + f[j + 1][i + k] + cost \}$
+          \EndFor
+        \EndFor
+      \EndFor
+      \State \Return $f[1][n]$
+      \Statex
+      \LComment {辅助函数：根据前缀和求区间$[s,t]$的重量和}
+      \Function {SegWeight}{$s,t$}
+        \If {$s = 1$}
+          \State \Return $sum[t]$
+        \Else
+          \State \Return $sum[t] - sum[s - 1]$
+        \EndIf
+      \EndFunction
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+(b) 计算过程用到的数据见表 \ref{table:t2}。
+
+\begin{table}[hp]
+  \centering
+  \caption{合并钢管计算表}
+  \label{table:t2}
+  \subfloat[前缀和数组 $sum$]{
+    \begin{tabular}[h]{|*{6}{c|}}
+      \hline
+      $i$ & 1 & 2 & 3 & 4 & 5 \\ \hline
+      $W[i]$ & 6 & 2 & 7 & 5 & 8 \\ \hline
+      $sum[i]$ & 6 & 8 & 15 & 20 & 28 \\ \hline
+    \end{tabular}
+  }
+  \quad
+  \subfloat[状态矩阵 $f$ 计算表]{
+    \begin{tabular}{|*{6}{c|}}
+      \hline
+      \diagbox[dir=NW]{$i$}{$f[i,j]$}{$j$} & 1 & 2 & 3 & 4 & 5 \\ \hline
+      1 & 0 & 6 & 14 & 25 & 37 \\ \hline
+      2 & - & 0 & 7 & 16 & 28 \\ \hline
+      3 & - & - & 0 & 7 & 19 \\ \hline
+      4 & - & - & - & 0 & 8 \\ \hline
+      5 & - & - & - & - & 0 \\ \hline
+    \end{tabular}
+  }
+\end{table}
+
+由表 \ref{table:t2} 的数据可知，最小总代价为 $37$。
+
+\clearpage
+
+\vspace{10pt}
+\noindent
+{\bf 题目3：}假设我们有$n$个活动要申请使用大礼堂：$S=\{a_1,a_2,...,a_n\}$。礼堂从时间$t=0$起可以安排。活动$a_i(1 \leq i \leq n)$需要连续使用的时间是$t_i$并且在时刻$d_i$前结束，这里有$0<t_i \leq d_i< \infty$。也就是说它必须被安排在时刻$d_i-t_i$前开始，否则不可能按时完成。因为在任何时刻，两个活动不能同时使用礼堂，所以我们只能满足一部分活动，但我们希望能满足尽量多的活动。
+\begin{enumerate}
+  \item[(a)]  请用动态规划的方法设计一个$O(n^2)$算法找出几何$S$中最大的一个活动子集并作出它们可以不冲突地使用大礼堂的调度。（提示：先把几何$S$中活动按它们的结束时间$d_i(1 \leq i \leq n)$排序。可假定$d_1 \leq d_2 \leq ... \leq d_n$。然后，定义子集$S_i=\{a_1,a_2,...,a_i\}, 1 \leq i \leq n$。按照动态规划的原理，先考虑$S_1$，再考虑$S_2,...$，最后考虑$S_n$。我们定义$M(i,j)$为安排集合$S_i$中$j$个活动所需的最短时间。如果集合$S_i$中根本没有$j$个活动，或者不可能找出这$j$个活动，则置$M(i,j)= \infty$。假设我们已算出$M(i,j),1 \leq i \leq k, 1 \leq j \leq n$，我们该怎样算$M(i+1,j),1 \leq j \leq n$？）
+  \item[(b)]  请用上面的算法找出下面7个活动的最优解。
+    \begin{table}[htb]   
+    \begin{center}   
+    \caption{活动参数}  
+    \label{table:1} 
+    \begin{tabular}{|c|c|c|c|c|c|c|c|}   
+    \hline   \textbf{A[i]} & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\   
+    \hline   \textbf{T[i]} & 4 & 4 & 2.5 & 4.5 & 6 & 3 & 5  \\ 
+    \hline   \textbf{D[i]} & 5 & 8 & 7.5 & 11.5 & 14 & 12 & 15  \\  
+    \hline   
+    \end{tabular}   
+    \end{center}   
+    \end{table}
+\end{enumerate}
+
+\textbf{解：} 显然，应该让每个活动占用礼堂的时间尽可能短，即对于任务 $a_i$，我们应令其占用礼堂的时间恰好为 $t_i$。并且，每个活动之间不应该留有时间间隔。
+
+注意到题目并没有规定各个活动间的相对顺序。对于每个活动，只要能在规定时间前结束即可。于是设状态 $f[i, j]$ 表示考虑前 $i$ 个活动，并且安排了 $j$ 个活动的总最短时间。
+则状态转移方程为：
+
+\begin{equation}
+  f[i, j] = \begin{cases} \label{formula:t3}
+    \min\{f[i-1, j-1] + t[i], f[i-1, j]\}, & f[i-1,j-1] + t[i] < d[i] \\
+    f[i-1,j], & f[i-1,j-1] + t[i] \geq d[i]
+  \end{cases}
+\end{equation}
+
+然后考虑对活动进行排序。可以基于交换法证明，应该将活动将结束时间 $d_i$ 作为第一关键字升序，持续时间 $t_i$ 作为第二关键字升序排序。排序以后按照式 \eqref{formula:t3} 迭代计算即可。
+
+最终答案就是最大的正整数 $i \in [1, n], \text{使得} f[n, i] \neq +\infty$。
+
+\vspace{5pt}
+\noindent
+{\bf 答：} (1) 见算法 \ref{algo:t3}；
+
+\begin{algorithm}
+  \caption{活动调度算法} \label{algo:t3}
+  \begin{algorithmic}[1]
+    \Require 一个结构体序列 $act[1..n]$，表示各个活动的信息，其元素包含三个字段 $a, t, d$（其中字段 $a$ 仅在记录方案过程中使用），含义见题面；
+    \Ensure 一个正整数 $res$，表示最多可以安排的活动数量，和一个正整数列 $sol[1..res]$，表示最终安排的活动及其顺序。
+    \Function {ActivitySchedule}{$act[1..n]$}
+      \State 对 $act[1..n]$ 中的元素按照字段 $t$ 为第一关键字，字段 $d$ 为第二关键字升序排序
+      \State 初始化状态矩阵 $f[0..n][0..n]$，使得 $f[0, x] = +\infty, f[y, 0] = 0 (x = 1,2,\ldots,n, y=0,1,\ldots,n)$
+      \LComment {迭代计算}
+      \For {$i \gets 1$ \To $n$}
+        \For {$j \gets 1$ \To $i$}
+          \State $newCost = f[i-1, j-1] + act[i].d$
+          \If {$newCost < act[i].t$ \textbf{and} $newCost < f[i-1,j]$}
+            \State $f[i, j] \gets newCost$
+            \State $status[i, j] \gets 0$ \Comment {$status[i, j]$ 表示当前状态从 $f[i-1,j-1]$（$0$） 还是从 $f[i-1,j]$（$1$） 转移而来}
+          \Else
+            \State $f[i, j] \gets f[i-1, j]$
+            \State $status[i, j] \gets 1$
+          \EndIf
+        \EndFor
+      \EndFor
+      \State $res \gets$ 最大的 $k$，使得 $f[n,k] \neq +\infty$
+      \LComment {通过 $status$ 来倒推出实际方案}
+      \State $(x, y) \gets (n, res)$
+      \While {$x > 0$}
+        \If {$status[x, y] = 0$}
+          \State $sol \gets [x] + sol$ \Comment{将 $x$ 插入到方案序列 $sol$ 的开头}
+          \State $(x, y) \gets (x-1, y-1)$
+        \Else
+          \State $(x, y) \gets (x-1, y)$
+        \EndIf
+      \EndWhile
+      \State \Return ($res$, $sol$)
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+(2) 计算中用到的矩阵如表 \ref{table:t3} 所示。
+
+\begin{table}
+  \centering
+  \caption{活动调度计算表}
+  \label{table:t3}
+  \subfloat[$act$ 序列排序结果]{
+    \begin{tabular}[h]{|*{8}{c|}}
+      \hline
+      $i$ & 1 & 2   & 3 & 4    & 5  & 6  & 7 \\ \hline
+      $a$ & 1 & 3   & 2 & 4    & 6  & 5  & 7 \\ \hline
+      $t$ & 4 & 2.5 & 4 & 4.5  & 3  & 6  & 5 \\ \hline
+      $d$ & 5 & 7.5 & 8 & 11.5 & 12 & 14 & 15 \\ \hline
+    \end{tabular}
+  }
+  \\
+  \subfloat[矩阵 $f$ 计算表]{
+    \begin{tabular}[h]{|*{8}{c|}}
+      \hline
+      \diagbox[dir=NW]{$i$}{$f[i,j]$}{$j$} & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\ \hline
+      1 & 4 & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ \\ \hline
+      2 & 2.5 & 6.5 & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ \\ \hline
+      3 & 2.5 & 6.5 & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ \\ \hline
+      4 & 2.5 & 6.5 & 11 & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ \\ \hline
+      5 & 2.5 & 5.5 & 9.5 & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ \\ \hline
+      6 & 2.5 & 5.5 & 9.5 & $+\infty$ & $+\infty$ & $+\infty$ & $+\infty$ \\ \hline
+      7 & 2.5 & 5.5 & 9.5 & 14.5 & $+\infty$ & $+\infty$ & $+\infty$ \\ \hline
+    \end{tabular}
+  }
+  \quad
+  \subfloat[矩阵 $status$ 计算表]{
+    \begin{tabular}[h]{|*{8}{c|}}
+      \hline
+      \diagbox[dir=NW]{$i$}{$status[i,j]$}{$j$} & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\ \hline
+      1 & 0 & - & - & - & - & - & - \\ \hline
+      2 & 0 & 0 & - & - & - & - & - \\ \hline
+      3 & 1 & 1 & 1 & - & - & - & - \\ \hline
+      4 & 1 & 1 & 0 & 1 & - & - & - \\ \hline
+      5 & 1 & 0 & 0 & 1 & 1 & - & - \\ \hline
+      6 & 1 & 1 & 1 & 1 & 1 & 1 & - \\ \hline
+      7 & 1 & 1 & 1 & 0 & 1 & 1 & 1 \\ \hline
+    \end{tabular}
+  }
+\end{table}
+
+由表 \ref{table:t3} 可得，$res = 4$，$sol = \{1, 3, 6, 7\}$。
+
+% \end{CJK}
+\end{document} 

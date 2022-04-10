@@ -8,6 +8,7 @@
         "*.tcc": "c",
         "complex": "c",
         "fstream": "c",
-        "system_error": "c"
+        "system_error": "c",
+        "types.h": "c"
     }
 }

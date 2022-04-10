@@ -1,0 +1,153 @@
+\documentclass{ctexart}
+\usepackage{minted}
+\usepackage[defaultmono]{droidsansmono}
+\usepackage[hmargin=1.25in,vmargin=1in]{geometry}
+\usepackage[colorlinks=true,xetex]{hyperref}
+
+\title{实验一~Linux 下编写程序}
+\author{71120226 陈宇轩}
+\date{\today}
+
+\begin{document}
+    \maketitle
+
+    \section{实验内容}
+
+    在 Linux 下编写一个 C/C++ 程序，拷贝一个文件。
+
+    \section{实验目的}
+
+    \begin{itemize}
+        \item 练习在 Linux 下编写并调试 C/C++ 代码，为以后其他实验做准备；
+        \item 初步学习各系统调用的使用方法。 
+    \end{itemize}
+
+    \section{实验过程}
+
+    \paragraph{安装 Linux 发行版} 使用发行版为 ArchLinux，安装镜像为 \href{https://mirrors.tuna.tsinghua.edu.cn/archlinux/iso/latest/archlinux-2022.04.05-x86_64.iso}{archlinux-2022.04.05-x86\_64.iso}，具体安装过程略；
+
+    \paragraph{安装开发相关软件包} 使用以下命令进行安装：
+
+    \begin{minted}[autogobble]{zsh}
+        sudo pacman -S gcc gdb vim
+    \end{minted}
+
+    \paragraph{编辑源码，编译}
+    
+    \begin{enumerate}
+        \item 在合适的地方使用 \mintinline{zsh}{vim my-ls.c} 编辑源码；
+        \item 使用 \mintinline{zsh}{gcc my-ls.c -o my-ls} 编译源码得到可执行文件 \mintinline{zsh}{my-ls}；
+        \item 使用 \mintinline{zsh}{./my-ls} 可以直接运行编译出的程序；
+        \item 使用 \mintinline{zsh}{man 2 <syscall>} 可以查看系统调用\verb|syscall|的文档（特别地，使用 \verb|man 2 syscalls| 可以查看全部系统调用的列表）。
+    \end{enumerate}
+
+    \paragraph{测试程序}
+
+    尝试在各种情况下运行程序（比如，改变源文件的所有者，改变权限，或者是给出一个不存在的文件作为输入），观察程序的输出，以及最终拷贝得到的文件内容、权限等是否正确（使用 \verb|sha256sum| 命令来计算并比较校验和，从而确保对于二进制格式文件也能得到正确的结果）。
+
+    \section{实验体会}
+
+    \begin{enumerate}
+        \item 大多数时候我们使用的并非直接的系统调用。我们所使用的大部分系统调用实际上是 glibc 的封装，参考 \href{https://man.archlinux.org/man/glibc.7}{glibc(7)} 和 \href{https://man.archlinux.org/man/intro.2}{intro(2)}；
+        \item glibc 封装的系统调用中，一般返回非负整数表示正常进行，返回 -1 表示调用未能正常进行，具体的原因则以 \verb|int| 形式写入 C 标准定义的变量 \verb|errno| 中，具体处理时需要阅读相关文档来确定具体错误类型；
+        \item 封装系统调用 \verb|creat| 的参数中，第二个参数是设置新建的文件的读写权限的。假设源文件的文件状态（``stat''）为 \verb|origin_stat|，则在调用 \verb|creat| 时，将第二个参数设置为 \verb|origin_stat.st_mode & 0777| 即可拷贝源文件的权限；
+        \item Linux（或者说，C） 中，大量使用指针传递结构体等复杂数据结构，使用位掩码来表示信息。
+    \end{enumerate}
+
+    \section{源代码}
+
+    在我实际的程序中，我是通过直接在命令行运行程序时提供参数来获取文件信息的，也就是模仿命令 \verb|ls| 的做法，并且对于大多数错误仅仅是简单地输出了 \verb|errno| 的值。最后，如果拷贝的目标文件存在（即拷贝操作会覆盖掉某个已存在文件），则程序会拒绝此次操作并生成错误信息。
+
+    \begin{minted}[autogobble,linenos=true,breaklines]{c}
+        // Standard Libraries
+        #include <stdio.h>
+        #include <stdlib.h>
+        #include <errno.h>
+        // glibc Headers
+        #include <sys/types.h>
+        #include <sys/stat.h>
+        #include <fcntl.h>
+        #include <unistd.h>
+        
+        int main(int argc, char *argv[])
+        {
+            if (argc < 3)
+            {
+                fprintf(stderr, "Usage: %s <origin> <target>\n", argv[0]);
+                exit(1);
+            }
+        
+            int origin_desc = open(argv[1], O_RDONLY);
+            struct stat origin_stat;
+            int origin_err = fstat(origin_desc, &origin_stat);
+        
+            if (origin_err != 0)
+            {
+                fprintf(stderr, "ERROR: Cannot open origin file %s.\n", argv[1]);
+                fprintf(stderr, "ERROR: fstat() returned value %d.\n", origin_err);
+                fprintf(stderr, "ERROR: Errno set to %d.\n", errno);
+                exit(2);
+            }
+            else if (S_ISDIR(origin_stat.st_mode))
+            {
+                fprintf(stderr, "ERROR: Origin file %s is a directory.\n", argv[1]);
+                exit(3);
+            }
+        
+            struct stat target_stat;
+            int target_err = -1;
+            int target_desc;
+        
+            if (stat(argv[2], &target_stat) != 0)
+            {
+                if (errno == ENOENT)
+                {
+                    target_desc = creat(argv[2], origin_stat.st_mode & 07777);
+                    target_err = fstat(target_desc, &target_stat);
+                }
+                if (target_err != 0)
+                {
+                    fprintf(stderr, "ERROR: Cannot create target file %s.\n", argv[1]);
+                    fprintf(stderr, "ERROR: fstat() returned value %d.\n", origin_err);
+                    fprintf(stderr, "ERROR: Errno set to %d.\n", errno);
+                    exit(4);
+                }
+            }
+            else // Target file exists
+            {
+                fprintf(stderr, "ERROR: Target file %s exists.\n", argv[2]);
+                exit(5);
+                // target_desc = open(argv[2], O_WRONLY);
+                // target_err = fstat(target_desc, &target_stat);
+                // if (target_err != 0)
+                // {
+                //     fprintf(stderr, "ERROR: Cannot create target file %s.\n", argv[2]);
+                //     fprintf(stderr, "ERROR: fstat() returned value %d.\n", origin_err);
+                //     fprintf(stderr, "ERROR: Errno set to %d.\n", errno);
+                //     exit(5);
+                // }
+                // else if (!S_ISDIR(target_stat.st_mode))
+                // {
+                //     fprintf(stderr, "ERROR: Target file %s exists and is not a directory.\n", argv[2]);
+                //     exit(6);
+                // }
+            }
+        
+            size_t buf_size = sizeof(char) * 50;
+            void *buf = (void*)malloc(buf_size);
+            int read_cnt = 0;
+        
+            do
+            {
+                read_cnt = read(origin_desc, buf, buf_size);
+                write(target_desc, buf, read_cnt);
+            }
+            while (read_cnt == buf_size);
+        
+            // printf("%d\n", S_ISDIR(origin_stat.st_mode));
+        
+            close(target_desc);
+            close(origin_desc);
+        }
+    \end{minted}
+\end{document}

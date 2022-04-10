@@ -1,7 +1,8 @@
+// Standard Libraries
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-
+// glibc Headers
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
