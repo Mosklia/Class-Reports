@@ -1,0 +1,158 @@
+\documentclass[12pt,a4paper]{ctexart}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+% \usepackage{CJK}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+% \usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{algorithm}
+\usepackage[indLines=false,beginComment=//~,beginLComment=//~,endLComment=]{algpseudocodex}
+\usepackage{fancyhdr}
+% \usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage[colorlinks=true,xetex]{hyperref}
+
+\algnewcommand{\To}{\textbf{to} }
+\algnewcommand{\DownTo}{\textbf{downto} }
+
+\begin{document}
+% \begin{CJK}{UTF8}{song}
+
+\title{
+  {\heiti《算法分析与设计》第 $4$ 次作业
+    \footnote{要求：1、分析题请用书面化语言给出详细分析过程。}
+    }
+}
+\date{}
+
+\author{
+姓名：\underline{陈宇轩}~~~~~~
+学号：\underline{71120226}~~~~~~
+成绩：\underline{~~~~~~~~~~~~~~~~~~}
+}
+
+\maketitle
+
+\noindent
+\section*{\bf \color{red}{算法分析题}}
+
+\noindent
+{\bf 题目1：}假设数组$A[1..n]$和$B[1..m]$已经排好序，$A[1] \leq A[2] \leq ... \leq A[n]$，和$B[1] \leq B[2] \leq ... \leq B[n]$。请设计一个复杂度为$O(n+m)$的贪心算法在数组$A[1..n]$和$B[1..m]$中各找一个数$A[u]$和$B[v]$使得它们的差别$|A[u]-B[v]|$最小。
+
+\vspace{5pt}
+\noindent
+{\bf 答：}假设答案为 $(A[u], B[v])$，则以下两式必有一个成立（记 $B[0] = -\infty, B[m+1] = +\infty$）：
+\begin{gather}
+  B[v-1] \leq A[u] \leq B[v] \\
+  B[v] \leq A[u] \leq B[v+1]
+\end{gather}
+即要么 $B[v]$ 小于 $A[u]$，要么 $v$ 是满足于 $B[v] \geq A[u]$ 的最小正整数。据此，考虑枚举 $u$，由 $B$ 序列单调递增，可知直接从 $1$ 到 $m$ 枚举 $v$，并在 $B[v] \geq A[u]$ 时停止枚举即可。该算法的时间复杂度为 $O(nm)$。
+
+注意到序列 $A$ 单调递增，故当 $u \gets u+1$ 以后存在两种情况：
+\begin{enumerate}
+  \item $A[u] \leq B[v]$：此时 $|B[v-1] - A[u-1]| \leq |B[k] - A[u]|, k = 0,1,2,\ldots,v-1$，即减小 $v$ 不可能令答案变优；
+  \item $A[u] > B[v]$：此时 $|B[v] - A[u]| = A[u] - B[v] \leq A[u] - B[k] = |B[k] - A[u]|, k=0,1,2,\ldots,v-1$，即减小 $v$ 也不可能令答案变得更优。
+\end{enumerate}
+故在每次增大 $u$ 的值时，无需重新从 $0$ 开始枚举 $v$，而是继承上一次的值继续枚举即可，时间复杂度降为 $O(n+m)$。
+
+伪代码见算法 \ref{algo:t1}。
+
+\begin{algorithm}[hp]
+  \caption{寻找差的最小值} \label{algo:t1}
+  \begin{algorithmic}[1]
+    \Require 两个序列 $A[1..n], B[1..m]$，表示题面中的 $A, B$ 序列
+    \Ensure 一个正数三元组 $(u, v, d)$，依次为题面中的 $u, v, \left|A[u]-B[v]\right|$ 的值
+    \Function {LeastDiff}{$A, B$}
+      \State $u, v, d \gets 0, 0, +\infty$
+      \State $j \gets 0$ \Comment{循环变量，$j$ 对应 $v$}
+      \For {$i \gets 1$ \To $n$}
+        \Repeat
+          \State $j \gets j+1$
+          \If {$|B[j] - A[i]| < d$}
+            \State $u, v, d \gets i, j, |B[j] - A[i]|$
+          \EndIf
+        \Until {$j \geq m$ \textbf{or} $B[j] \geq A[i]$}
+      \EndFor
+      \State \Return ($u, v, d$)
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\clearpage
+
+\vspace{10pt}
+\noindent
+{\bf 题目2：}假设一长度汽车线路上有$n$个站点并从$1$开始顺序编号为$1,2,...,n$，其中起点站为$1$，终点站为$n$。旅客可以从任一个站$i$上车，$1 \leq i \leq n-1$，到下面任一站$j$下车，$i < j \leq n$。假设已知$p(i,j)$为需要在站$i$上车，在站$j$下车的旅客人数$(1 \leq i < j \leq n)$。又假设每辆公共汽车在每个站都停靠，并可载客$30$人。请设计一个$O(n^2)$算法来确定至少需要多少辆汽车可以满足所有旅客需要。
+
+\vspace{5pt}
+\noindent
+{\bf 答：}用差分+前缀和的方法求出每一站\textbf{发车后} 车上的乘客数，再对这些数值取最大值即可求出最大载客数，进而算出需要的车数。
+
+伪代码见算法 \ref{algo:t2}。
+
+\begin{algorithm}
+  \caption{车辆调度} \label{algo:t2}
+  \begin{algorithmic}
+    \Require 函数 $p(i, j)$，如题所述，表示第 $i$ 站上车第 $j$ 站下车的人数
+    \Ensure 一个正整数 $s$，表示至少需要多少辆汽车
+    \Function {BusArrangement}{$p$}
+      \State $sum \gets [0] \times n$ \Comment {将 $sum$ 设为一个包含 $n$ 个 $0$ 的数组}
+      \For {$i \gets 1$ \To $n-1$}
+        \For {$j \gets i+1$ \To $n$}
+          \State $sum[i] \gets sum[i] + p(i, j)$
+          \State $sum[j] \gets sum[j] - p(i, j)$
+        \EndFor
+      \EndFor
+      $s \gets sum[1]$ \Comment {最终答案为 $\lceil \frac{s}{30} \rceil$}
+      \For {$i \gets 2$ \To $n$}
+        \State $sum[i] \gets sum[i-1] + sum[i]$
+        \If {$sum[i] > s$}
+          \State $s \gets sum[i]$
+        \EndIf
+      \EndFor
+      \State \Return $\lceil \frac{s}{30} \rceil$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\clearpage
+
+\vspace{10pt}
+\noindent
+{\bf 题目3：}假设我们开一部卡车从城市$A$到城市$B$，沿路经过一些苹果市场。城市$A$和城市$B$ 也有苹果市场。为方便起见，假定一共有$n$个市场，顺序编号为$1$到$n$，其中城市$A$的市场为第$1$号，城市$B$的市场为第$n$号。在每个市场$i$，$1 \leq i \leq n$，我们可以买苹果，价格已知为$B[i]$ (元/斤)，也可以卖苹果，卖价为$S[i]$。我们希望在某个市场$i$买苹果，然后在某市场$j$卖掉，$j \geq i$，使得赚的钱最多，即$M = S[j] - B[i]$最大。请设计一个$O(n)$的贪心算法找出这两个市场$i$和$j$并报告这个最大差价$M = S[j] - B[i]$。我们规定，车子只能向前开，不可以往回开。你可以在同一市场买和卖，但只能买一次和卖一次。如果这个最大差价是负数也给予报告，说明最少会亏多少。
+
+\vspace{5pt}
+\noindent
+{\bf 答：} 考虑枚举卖出的市场 $j$，于是对于给定的卖出市场，买入市场就只能是 $i = 1,2,3,\ldots,j$，选取其中买入价格最低的那个市场买入，得到的 $M=S[j]-B[i]$ 就是在市场 $j$ 卖出的最大收益。
+
+注意到随着 $j$ 增大，合法的买入价格最低的市场编号 $i$ 单调不降，于是只需要在枚举 $j$ 的同时更新 $i$ 的值，并在 $M$ 更新的同时记录 $i$ 与 $j$ 的值即可求出答案。
+
+伪代码见算法 \ref{algo:t3}。
+
+\begin{algorithm}
+  \caption{苹果交易} \label{algo:t3}
+  \begin{algorithmic}
+    \Require 两个数组 $B[1..n], S[1..n]$，依次表示每个市场的苹果买入，卖出价格
+    \Ensure 一个有序正数三元组 $(s, t, M)$，依次表示收益最高的方案的买入市场，卖出市场和差价
+    \Function {AppleTrade}{$s, t, M$}
+      \State $s, t, M \gets 0, 0, -\infty$
+      \State $i, v \gets 0, +\infty$ \Comment {$v = B[i]$}
+      \For {$j \gets 1$ \To $n$}
+        \If {$v > B[j]$}
+          \State $i, v \gets j, B[j]$
+        \EndIf
+        \If {$M < S[j] - v$}
+          \State $s, t, M \gets i, j, S[j]-v$
+        \EndIf
+      \EndFor
+      \State \Return ($s, t, M$)
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+% \end{CJK}
+\end{document} 
