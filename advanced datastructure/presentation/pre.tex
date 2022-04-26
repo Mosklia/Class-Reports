@@ -1,0 +1,24 @@
+\documentclass{ctexart}
+\usepackage{amsmath}
+\usepackage[hmargin=1.25in,vmargin=1in]{geometry}
+
+\author{陈宇轩 \and 张欣}
+\title{Splay Tree and its Amortized Analysis}
+
+\begin{document}
+    \maketitle
+
+    \section{Intro}
+
+    Hello, everyone. Today we'd like to introduce a self-balanced binary search tree, Splay tree to you.
+
+    Splay tree was first invented in 1985, by Daniel Sleator and Robert Tarjan. In their article \textit{Self-adjusting binary search trees},
+    they observed known kinds of efficient search trees, finding that efficient search trees have various drawbacks, one of which is that, the
+    data structures are all designed to reduce the worst-case time per operation. Typically, search trees need to perform not one, but a
+    sequence of operations. In such situations, to reduce ``average times'', or, ``amortized time'' of operations, rather than to reduce the
+    time of a single one, can be a good idea.
+
+    So, by following the principle of ``restructure simply to improve the efficiency of future operations'', Splay tree was invented. It
+    uses ``splaying'', moving a specified node to the root of the tree by performing a sequence of rotations along the original path from the
+    node to the root, as its restructuring heuristics.
+\end{document}

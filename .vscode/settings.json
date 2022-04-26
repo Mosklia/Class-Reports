@@ -9,6 +9,7 @@
         "complex": "c",
         "fstream": "c",
         "system_error": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "stdlib.h": "c"
     }
 }

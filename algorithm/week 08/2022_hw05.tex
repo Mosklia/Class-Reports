@@ -1,0 +1,150 @@
+\documentclass[12pt,a4paper]{ctexart}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+% \usepackage{CJK}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{fancyhdr}
+% \usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{minted}
+\usepackage[defaultmono]{droidsansmono}
+\usepackage[colorlinks=true,xetex]{hyperref}
+
+\title{
+  {\heiti《算法分析与设计》第 $5$ 次作业
+    \footnote{要求：1、分析题请用书面化语言给出详细分析过程。}
+    }
+}
+\date{}
+\input{personal_info/me.tex}
+
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+
+\begin{document}
+% \begin{CJK}{UTF8}{song}
+  \maketitle
+
+
+  \noindent
+  \section*{\bf \color{red}{算法分析题}}
+
+  \noindent
+  {\bf 题目1：}用后进先出的 DFS 搜索法找出$n$-皇后问题的一个解。
+
+  \vspace{5pt}
+  \noindent
+  {\bf 答：}\\ 直接使用 C++ 代码实现。
+
+  \begin{minted}[bgcolor=bg,frame=lines,linenos=true,autogobble,breaklines]{cpp}
+      /*  n-皇后解决方法
+       *  采用 DFS 算法实现，使用位运算优化
+       *  语言标准为 C++11
+       *  随文档一并采用 GNU GPL V3 授权
+       */
+
+      #include <iostream>  // stdio
+      #include <vector>    // std::vector
+
+      using state_t = unsigned long long; // 表示当前状态的数据类型
+      // 对于第 i 位，若为 0 则表示第 i+1 列不可放置皇后，否则可放置
+
+      int n; // 题目输入的 n，即皇后个数
+
+      /*  @brief 向屏幕输出计算出的任意一种解，输出格式为 n * n 的
+       *  @brief 字符矩阵，从上至下依次表示各行的摆放情况，其中 '.'
+       *  @brief 表示空格，'*' 表示放置一个皇后
+       *
+       *  @param ans 计算出的解序列
+       */
+      void print_ans(const std::vector<int> &ans)
+      {
+          for (int x : ans)
+          {
+              for (int i = 1; i <= n; ++i)
+              {
+                  std::cout << (i == x ? '*' : '.');
+              }
+              std::cout << std::endl;
+          }
+      }
+
+      /*  @brief DFS 求解八皇后问题
+       *  @param level 搜索的深度，亦为正在放置的皇后次序
+       *  @param left 二进制位表示的已放置的皇后左下方不能放置的格子
+       *  @param straight 二进制位表示的已放置的皇后正下方不能放置的格子
+       *  @param right 二进制位表示的已放置的皇后右下方不能放置的格子
+       *  @return 是否成功找到解。用于在找到任意解后结束算法
+       */
+      bool dfs(int level, state_t left, state_t straight, state_t right)
+      {
+          static std::vector<int> ans; // 解序列
+          // 已放置成功 n 个皇后，即成功找到一组可行解
+          if (level == n + 1)
+          {
+              print_ans(ans);
+              return true;
+          }
+
+          int row = left | straight | right; // 本行中不可用的格子
+          // 枚举本行的皇后的位置，i 表示第 i+1 行，解序列中记录 i+1 的值
+          for (int i = 0; i < n; ++i)
+          {
+              state_t cur = 1ULL << i;
+              // 此处可放置皇后
+              if (!(row & cur))
+              {
+                  ans.push_back(i + 1);
+                  // 本行的 left 左移一位即可产生下一行的 left
+                  // 注意本行的皇后也会产生一个不可用格子，对后续产生影响
+                  // straight, right 同理
+                  if (dfs(level + 1, (left | cur) << 1, straight | cur, (right | cur) >> 1))
+                  {
+                      // 成功找到一个解
+                      return true;
+                  }
+                  ans.pop_back();
+              }
+          }
+          // 未能找到解
+          return false;
+      }
+
+      int main()
+      {
+          std::cin >> n;
+          dfs(1);
+      }
+  \end{minted}
+
+  \newpage
+
+  \vspace{10pt}
+  \noindent
+  {\bf 题目2：}请设计一个回溯算法来搜索一个有向图$G(V,E)$的所有哈密尔顿回路。假定图$G$是用邻接矩阵表示的。
+
+  \vspace{5pt}
+  \noindent
+  {\bf 答：}\\
+
+
+  \vspace{10pt}
+  \noindent
+  {\bf 题目3：}用最大价值先出的分枝限界法找一个图的最大团。我们假定图$G$是用邻接矩阵表示的。
+
+  \vspace{5pt}
+  \noindent
+  {\bf 答：}\\
+
+
+
+% \end{CJK}
+\end{document} 
