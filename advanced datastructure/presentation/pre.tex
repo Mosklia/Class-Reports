@@ -2,7 +2,7 @@
 \usepackage{amsmath}
 \usepackage[hmargin=1.25in,vmargin=1in]{geometry}
 
-\author{陈宇轩 \and 张欣}
+\input{personal_info/authors_short.tex}
 \title{Splay Tree and its Amortized Analysis}
 
 \begin{document}
@@ -10,15 +10,140 @@
 
     \section{Intro}
 
-    Hello, everyone. Today we'd like to introduce a self-balanced binary search tree, Splay tree to you.
+    今天我们要给大家介绍的是一种自平衡的二叉搜索树，Splay 树。
 
-    Splay tree was first invented in 1985, by Daniel Sleator and Robert Tarjan. In their article \textit{Self-adjusting binary search trees},
-    they observed known kinds of efficient search trees, finding that efficient search trees have various drawbacks, one of which is that, the
-    data structures are all designed to reduce the worst-case time per operation. Typically, search trees need to perform not one, but a
-    sequence of operations. In such situations, to reduce ``average times'', or, ``amortized time'' of operations, rather than to reduce the
-    time of a single one, can be a good idea.
+    Splay 树由 Daniel Sleator 和 Robert Tarjan 在 1985 年的论文《Self-adjusting binary search trees》中提出。在论文中，他们
+    考察了当时已经存在的几种 BST，发现它们各自存在着一些不足，其中最重要的一点是：它们的每个操作，都是为了优化最坏情况下的单次操作的时间复
+    杂度。然而，大多数搜索树需要进行很多次操作，在这种情况下，尝试去优化多次操作的“平均时间”，或者，“均摊时间”，可能会比“小格局”更加有效。
 
-    So, by following the principle of ``restructure simply to improve the efficiency of future operations'', Splay tree was invented. It
-    uses ``splaying'', moving a specified node to the root of the tree by performing a sequence of rotations along the original path from the
-    node to the root, as its restructuring heuristics.
+    于是，在“为了将来的效率而进行简单重构”的思想指导下，Splay 树诞生了。它使用一种被称为 ``splay'' 的，通过一系列的旋转操作，来将某个
+    结点移动到整棵 Splay 树的树根处的操作作为自己的重构策略。
+
+    \section{结构与操作}
+    \subsection{结构}
+
+    结点方面，正如同其它的二叉树一般，Splay 树的每个结点 $x$ 也需要至少 4 个字段，来表示自身的信息。它们分别是：指向父节点的指针 $p(x)$，
+    指向左子结点的指针 $l(x)$，指向右子节点的指针 $r(x)$，和自身所存储的元素 $val$。与其它 BST 结点相比，Splay 结点的最大特点是，不需要
+    维护用于保持整棵树平衡的附加信息，如 Treap 的优先级字段，AVL 的树高字段，或者是红黑树的结点颜色字段。
+
+    树结构方面，Splay 也与其它的二叉搜索树没有什么明显区别，不过在实现中，根据具体情形需要，可能会预先插入一些表示无穷大或者无穷小，或者是虚根
+    （用于保证树永远非空来简化部分操作）等虚拟结点。
+
+    \subsection{操作}
+    \subsubsection{旋转与 splay}
+
+    Splay 树是一种基于旋转的二叉搜索树，即其维护自身平衡的原子操作为旋转。一共有两种旋转操作：
+
+    \textit{这部分内容需要对着 PPT 讲解，最好使用相关工具指着图讲。描述中的 $p(x)$ 等函数的值不会随着树的形态发生改变，直到操作完成。}
+    \begin{itemize}
+        \item \textbf{左旋}：将一条右斜的边（连接一个结点 $x$ 和它的右子结点 $r(x)$ 的边）左旋，使 $r(x)$ 取代 $x$ 原本的位置，并令 $x$ 成为
+              $r(x)$ 的左子结点的操作。
+        \item \textbf{右旋}：将一条左斜的边（连接一个结点 $x$ 和它的左子结点 $l(x)$ 的边）右旋，使 $l(x)$ 取代 $x$ 原本的位置，并令 $x$ 成为
+              $l(x)$ 的右子结点的操作。
+    \end{itemize}
+
+    不难发现旋转操作不会破坏二叉搜索树的性质。
+
+    旋转操作的对象是树的边，但是，由于一棵树中，一条边必定连接着有父子关系的两个结点，并且除根以外每个结点有着自己唯一的连往父结点的边，故下文
+    中，我们可能用旋转点 $x$ 这样的方式来表达“旋转与结点 $x$ 与其父节点 $p(x)$ 相连的那条边”。同时，由于旋转的方向仅由边自身的方向决定，
+    故下文中省略旋转操作的方向，统一称为“旋转”。
+
+    将旋转操作连续应用一次或者两次，可以得到一个新的操作，称为``Splay 步''。根据需要进行 Splay 操作的结点 $x$ 与其父节点 $p(x)$ 及祖父结
+    点 $g(x) = p(p(x))$ 的关系，Splay 步有 3 个不同的变种：
+
+    \begin{enumerate}
+        \item \textbf{zig}。如果 $p(x)$ 即为树根，或者说，$p(x)$ 没有父结点，则直接旋转一次 $x$，将 $x$ 变为树根；
+        \item \textbf{zig-zig}。如果 $p(x)$ 不是树根，且 $p(x)$ 及 $x$ 均在各自父节点的同一边（同为左子或者同为右子），则先旋转 $p(x)$，
+              后旋转 $x$，从而使得旋转后，$p(x)$，$g(x)$ 在各自的新父节点的同一边，且 $x$ 为 $p(x)$ 的父节点，$p(x)$ 为 $g(x)$ 的子节点；
+        \item \textbf{zig-zag}。如果 $p(x)$ 不是树根，且 $p(x)$ 及 $x$ 不在各自父结点的同一边，则连续将 $x$ 旋转两次（\textit{注意：两
+              次旋转的不是同一条边}），使得 $p(x)$，$g(x)$ 成为 $x$ 的两个子结点。
+    \end{enumerate}
+
+    将 Splay 步连续进行多次，直到 $x$ 成为树根为止，这样的一次连续操作就是 Splay 操作。
+
+    \subsection{查询}
+
+    查询某一个元素 $i$ 是否存在于 Splay 树中，并且返回包含元素 $i$ 的指针（若存在）或者返回 \verb|nullptr|（若不存在）。
+
+    Splay 树本身即为二叉搜索树，故此操作直接按照一般二叉搜索树的查找方法进行即可，只需要再最后加上一次 Splay 操作将查找过程中最后一个被访问到的非
+    空结点（如果 $i$ 存在于 Splay 树中，则这个结点就是存储 $i$ 的那个结点）移动至树根即可。
+
+    {\noindent \textit{以下部分：插入和删除操作是依赖分裂和合并的，但是如果作为普通二叉搜索树的话用户不会直接使用分裂和合并，因此我不知道该用什么顺序比较好。}}
+
+    \subsection{分裂}
+
+    尽管 Splay 作为二叉搜索树时，用户不会直接调用它的分裂与合并，但由于在 Tarjan 与 Sleator 的论文中，Splay 树的插入和删除是通过分裂与合并实现的，
+    因此我们先介绍分裂与合并，后介绍插入与删除。
+
+    分裂操作需要指定一个元素 $i$，将原树 $t$ 分成两棵树，一棵（$t_1$）的所有元素均小于等于原树，且另一棵 $t_2$ 的所有元素均大于原树。
+
+    利用之前已经定义的查询操作，我们可以将最后访问的那个结点 $x$ 移至树根，并根据 $x.val$ 与 $i$ 的关系断开树根 $x$ 与左子结点 $l(x)$ 相连的那条边（如果 $x.val > i$）
+    或者断开 $x$ 与右子结点 $r(x)$ 相连的边（如果 $x.val \leq i$），并返回新得到的两棵树的根。
+
+    \subsection{合并}
+
+    合并操作是与分裂操作相配合的。合并操作需要指定两颗树 $t_1$，$t_2$，其中 $t_1$ 中的任何一个元素均小于 $t_2$ 中的任何一个元素。
+
+    合并操作通过将 $t_1$ 中的最大元素 $i_\mathrm{max}$ 移动到根 $rt(t_1)$ 上，此时树 $t_1$ 根右子结点的 $r(rt(t_1))$ 必为空，再将 $t_2$ 的根设为 $t_1$ 的
+    右子结点，得到的便是 $t_1$ 与 $t_2$ 合并出来的新树 $t$，返回其根结点的指针即可。
+
+    \subsection{插入}
+
+    将一个元素 $i$ 插入至 Splay 树中。
+
+    先通过查询操作检测元素 $i$ 是否存在于树中，如果存在则直接更新该结点。否则，将树通过分裂操作分裂成全部元素小于 $i$ 的子树 $t_1$ 与全部元素大于 $i$ 的子树 $t_2$，再新建
+    一个结点 $x_i$ 用于保存元素 $i$，令 $l(x_i) = rt(t_1), r(x_i) = rt(t_2)$，返回这个结点 $x_i$ 的指针即可。
+
+    \subsection{删除}
+
+    将一个元素 $i$ 从 Splay 树中删除。
+
+    同样先通过查询操作检测元素 $i$ 是否存在于原树 $t$ 中，如果不存在则直接结束操作。否则，在查询操作后，直接提取根结点的左右两棵子树（即以 $l(rt(t)), r(rt(t))$ 为根的两棵
+    树）相合并，并删除原先的根结点 $rt(t)$ 即可。
+
+    \section{复杂度分析}
+
+    设一共保存有 $n$ 个元素，则 Splay 树包含 $n$ 个结点，每个结点拥有常数个字段，这些字段除了表示元素的 $val$ 字段以外都是常数级的空间复杂度，故 Splay 树的空间复杂度为 $O(n)$。
+
+    对 Splay 树的维护算法的时间复杂度分析需要用到势能分析。设每个结点都有一个权值 $w(x)$（\textit{这个权值与树的调整无关，仅为复杂度分析中的一个参数，也不会被保存到树中}），并记
+    每个结点的 size $s(x)$ 为该结点为根的子树中所有结点（包括自身）的权值和，记结点的 rank $r(x) = \log s(x)$，整棵树在某一形态 $T$ 时的势能 $\varPhi(t)$ 为各结点的 rank 之和，
+    则有以下引理：设树根为 $t$，进行 splay 操作的结点为 $x$，则该次 splay 步的均摊时间不超过 $3(r(t) - r(x)) + 1 = O(\log \frac{s(t)}{s(x)})$。
+
+    \textit{这部分证明需要联系图来讲，等我把图和 PPT 做到这里了再填坑吧。}
+
+    由该引理我们可以作以下推导：连续进行 $m$ 次 splay 操作的均摊时间不超过 $m(3\log \frac{s(t)}{s(x)} + 1)$，且由于对任何一个结点 $i$ 来说，它的 rank 介于 $\log w(i)$（此时结
+    点 $i$ 为叶子结点）与 $\log s(t)$（此时结点 $i$ 为树根）之间，$m$ 次操作的势能总变化 $\Delta\varPhi$ 小于$\sum_{i \in T} \log \frac{s(t)}{s(i)}$ ，由势能分析的公式
+    $T_\mathrm{amortized} = T_\mathrm{total} - \Delta\varPhi$ 可知，这 $m$ 次操作的实际时间代价为 $T_\mathrm{total} = O(m\log \frac{s(t)}{s(x)} + \sum_{i \in T} \log \frac{s(t)}{s(i)})$。
+
+    令各结点的权值 $w(x) = \frac{1}{n}$，则 $s(i)$ 最小值为 $w(i) = \frac{1}{n}$，且 $s(t) = 1$，代入上式即可得到结论（Balance Theorem）：$T_\mathrm{total} = O((n+m)\log n)$。
+
+    \textit{原作者用类似的方法，通过给 $w(x)$ 赋上不同的值，得到了一共 5 个定理，此处暂时省略——我会在 PPT 中把它们变成思考题。}
+
+    在求出 splay 操作的时间复杂度以后，我们可以用类似的方法，进一步求出其他操作的时间复杂度。
+    
+    \textit{个人推测：下文中选择研究对象为森林而非某一棵树的原因是分裂操作会产生新的树，计算势能时对所有元素同时计算贡献是为了方便确定势能变化范围。}
+
+    \textit{算了复杂度和应用我来讲吧，感觉没有 PPT 空对着文档 YY 真的好难受啊...}
+
+    \section{应用}
+
+    \subsection{其他数据结构}
+
+    \subsubsection{词典树}
+
+    词典树是一种用来存储词典的数据结构，它的每一个结点存储一个字符，并通过各个结点的连接保存这些字符组成的某些单词。在树上按照一定规则查找，即可确定某个单词是否存在于词典中。
+
+    词典树是一种三叉树，也就是每个结点可能拥有左，中，右三个子结点。其中，连接所有左，右子结点的边为实边，连接中子结点的边为虚边。
+    \textit{还是好麻烦...我直接讲吧...}
+
+    \subsubsection{Link-Cut Tree}
+
+    Link-Cut Tree 是一种维护由有根树组成的动态森林的数据结构，是 Splay 的经典应用。它广泛应用于各种网络优化问题中，如求某个网络的最大流、最小费用流等等\dots
+
+    Link-Cut Tree 中使用一棵三叉的虚树来维护整棵森林，并且使用类似于维护词典树的方法来处理各种操作。
+
+    \subsection{实际生活中}
+
+    从某种角度上来说，Splay 树是一种``失败''的数据结构：尽管自身是二叉搜索树，实际应用中，需要使用二叉搜索树时却很少会使用 Splay，而更常见的选择是红黑树或者 B 树等其他搜索树。
+    其一大原因便是 Splay 树的单次操作代价可能会很高，影响实际应用中，特别是一些实时场景下的用户体验。
 \end{document}
