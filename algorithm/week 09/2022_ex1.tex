@@ -1,0 +1,249 @@
+\documentclass[12pt,a4paper]{ctexart}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+% \usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage{float}
+\usepackage[defaultmono]{droidsansmono}
+
+\graphicspath{{pics/}}
+\ctexset{today=small}
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}
+
+\input{personal_info/info.tex}
+
+\begin{document}
+    \begin{titlepage}
+        \heiti
+        \vspace*{64pt}
+        \begin{center}
+            \fontsize{48pt}{0} 算法设计与分析\\
+            \vspace*{36pt}
+            \fontsize{48pt}{0}{实\quad 验\quad 报\quad 告}\\
+            \vspace*{48pt}
+            \LARGE（2021\~{}2022 学年度\qquad 第 3 学期）\\
+            \vspace*{48pt}
+        
+            \LARGE 实验名称\ \ \underline{\makebox[200pt]{\ExamTitle}}\\
+            \LARGE 实验地点\ \ \underline{\makebox[200pt]{\ExamAddr}}\\
+            \LARGE 实验日期\ \ \underline{\makebox[200pt]{\today}}\\
+            \LARGE 学生姓名\ \ \underline{\makebox[200pt]{\MyName}}\\
+            \LARGE 学生学号\ \ \underline{\makebox[200pt]{\MySID}}\\
+            \LARGE 指导教师\ \ \underline{\makebox[200pt]{\TeacherName}}\\
+            \vspace*{48pt}
+            
+            \LARGE 东南大学\quad  计软智学院 \quad 制
+        \end{center}
+    \end{titlepage}
+
+\title{
+  {\heiti \textbf{实验一\ 分治法}
+    \footnote{要求：1、分析题请用书面化语言给出详细分析过程。2、实验请统一使用ex0*-学号-姓名的命名格式，latex版本请附上源代码并打包提交。}
+    }
+}
+\date{}
+
+\maketitle
+
+\section*{\bf \color{black}{一、实验目的及意义}}
+\noindent
+\begin{enumerate}
+	\item[(1)]  掌握分治法的基本思想、求解问题的基本步骤；
+	\item[(2)]  掌握分治算法的时间复杂度；
+	\item[(3)]  掌握快速幂算法、快速排序等高效算法。
+\end{enumerate}
+
+\vspace{5pt}
+
+\section*{二、实验内容与结果}
+\subsection*{题目1：快速排序算法}
+\paragraph{题目内容}
+\subparagraph{题目描述}
+\begin{itemize}
+    \item 输入任意规模的一维数组a[0,1,...,n-1]，采用分治法实现一个快速排序算法，实现其从小到大的排序。
+    \item \textbf{注意}：直接调用排序库函数实现的不得分。
+\end{itemize}
+
+\subparagraph{输入格式}
+    \begin{itemize}
+        \item 输入一行，需要排序的数组，数组元素为正整数，数组大小为$n(1 \leq n \leq 100)$。
+    \end{itemize}
+\subparagraph{输出格式}
+    \begin{itemize}
+        \item 输出一行，已排好序的数组。
+    \end{itemize}
+
+\subparagraph{输入输出样例}
+如下
+\begin{table}[htb]   
+    \begin{center}   
+    \begin{tabular}{|c|c|}   
+    \hline   \textbf{Input 1} &11 \ 6 \ 3 \ 7 \ 8 \ 5 \ 1 \ 4 \ 2 \ 4 \ 9 \ 10 \\   
+    \hline   \textbf{Output 1} &1 \ 2 \ 3 \ 4 \ 4 \ 5 \ 6 \ 7 \ 8 \ 9 \ 10 \ 11  \\ 
+    \hline   
+    \end{tabular}   
+    \end{center}   
+\end{table}
+
+\vspace{5pt}
+
+\paragraph{实验环境}
+\begin{itemize}
+    \item 程序设计语言：C++
+    \item 编程环境：
+    \begin{itemize}
+        \item 编辑器：Visual Studio Code (1.67.0)
+        \item 编译器：g++ (GCC) 11.2.0
+        \item 操作系统：ArchLinux 5.17.5-zen1-1-zen (64-bit)
+    \end{itemize}
+\end{itemize}
+
+\vspace{5pt}
+
+\paragraph{解答} 时间复杂度：$O(n \log n)$
+
+源码：
+\inputminted[bgcolor=codebg,frame=lines,autogobble,linenos=true,breaklines]{cpp}{src/t1.cpp}
+
+\vspace{5pt}
+
+\paragraph{实验结果}
+（可附上截图）
+
+\newpage
+
+\subsection*{题目2：快速幂算法}
+\paragraph{题目内容}
+\subparagraph{题目描述}
+\begin{itemize}
+    \item 采用分治法求$3^{K}$的最后n位数。 其中0<n<=8，1<K<$10^{8}$。
+\end{itemize}
+
+\subparagraph{输入格式}
+    \begin{itemize}
+        \item 输入一行，$k$和$10^n$，中间用空格隔开。
+    \end{itemize}
+
+\subparagraph{输出格式}
+    \begin{itemize}
+        \item 输出一行，一个整数表示答案。
+    \end{itemize}
+    
+\subparagraph{输入输出样例}
+如下
+\begin{table}[htb]   
+    \begin{center}   
+    \begin{tabular}{|c|c|}   
+    \hline   \textbf{Input 1} &8 \ 10000 \\   
+    \hline   \textbf{Output 1} &6561 \\ 
+    \hline   \textbf{Input 2} &12345 \ 1000 \\
+    \hline   \textbf{Output 2} &643 \\ 
+    \hline   
+    \end{tabular}   
+    \end{center}   
+\end{table}
+
+
+\vspace{5pt}
+
+\paragraph{实验环境}
+\begin{itemize}
+    \item 程序设计语言：C++
+    \item 编程环境：
+    \begin{itemize}
+        \item 编辑器：Visual Studio Code (1.67.0)
+        \item 编译器：g++ (GCC) 11.2.0
+        \item 操作系统：ArchLinux 5.17.5-zen1-1-zen (64-bit)
+    \end{itemize}
+\end{itemize}
+
+\vspace{5pt}
+
+\paragraph{解答} 时间复杂度：$\Theta(\log K)$
+
+源码：
+\inputminted[bgcolor=codebg,frame=lines,autogobble,linenos=true,breaklines]{cpp}{src/t2.cpp}
+
+\vspace{5pt}
+
+\paragraph{实验结果}
+（可附上截图）
+
+\newpage
+
+\subsection*{题目3：分治法-数数}
+\paragraph{题目内容}
+\subparagraph{题目描述}
+
+\begin{itemize}
+    \item 输入n个元素构成一个数组。要求返回n个数字，每个数字的含义是：原数组中每个元素右边比它小的个数。
+    \item \textbf{注意}：需要采用分治法实现。
+\end{itemize}
+
+\subparagraph{输入格式}
+    \begin{itemize}
+        \item 输入数据只有一行，表示原数组，大小为$N(2 \leq N \leq 10)$
+    \end{itemize}
+
+\subparagraph{输出格式}
+    \begin{itemize}
+        \item 针对原数组，输出一行数字，表示原数组中每个元素右边比它小的个数。
+    \end{itemize}
+    
+
+\subparagraph{输入输出样例}
+如下：
+\begin{table}[htb]   
+    \begin{center}   
+    \begin{tabular}{|c|c|}   
+    \hline   \textbf{Input 1} &5 \ 2 \ 6 \ 1\\   
+    \hline   \textbf{Output 1} &2 \ 1 \ 1 \ 0 \\ 
+    \hline   
+    \end{tabular}   
+    \end{center}   
+\end{table}
+
+\vspace{5pt}
+
+\paragraph{实验环境}
+\begin{itemize}
+    \item 程序设计语言：C++
+    \item 编程环境：
+    \begin{itemize}
+        \item 编辑器：Visual Studio Code (1.67.0)
+        \item 编译器：g++ (GCC) 11.2.0
+        \item 操作系统：ArchLinux 5.17.5-zen1-1-zen (64-bit)
+    \end{itemize}
+\end{itemize}
+
+\vspace{5pt}
+
+\paragraph{解答} 时间复杂度：$\Theta(N \log N)$
+
+源码：
+\inputminted[bgcolor=codebg,frame=lines,autogobble,linenos=true,breaklines]{cpp}{src/t3.cpp}
+
+\vspace{5pt}
+
+\paragraph{实验结果}
+（可附上截图）
+
+
+\vspace{5pt}
+
+
+
+
+
+\section*{三、心得体会}
+    可根据“实验思考”部分作答，也可以根据个人具体体会作答。自己算法的创新点可在此处进行介绍，酌情加分。
+
+\end{document} 

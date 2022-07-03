@@ -10,6 +10,7 @@
         "fstream": "c",
         "system_error": "c",
         "types.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "shm.h": "c"
     }
 }
