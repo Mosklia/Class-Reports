@@ -1,0 +1,136 @@
+; T1: f(x) = 3x
+; Since we have no macro to assign a constant to a variable,
+; some loops should be processed manually.
+; Anyway, some skills can be used: we know 3X = X + 2X.
+; Calculate Y = X first, then calculate Y += 2X.
+;
+    IF X != 0 GOTO A
+        GOTO E
+[A] Z1 <- X                 ; Z1 holds 2^{n}X
+    Y <- Z1
+
+    ; Beginning of the section to double Z1.
+    Z2 <- Z1
+[B]     Z2 <- Z2 - 1        ; Add Z2 to Z1.
+        Z1 <- Z1 + 1
+    IF Z2 != 0 GOTO B
+    ; End of the section to double Z1.
+
+    ; Beginning of the section to perform Y <- Y + Z1.
+    Z2 <- Z1                ; Do not destroy Z1 so that the program can be extended
+[C]     Z2 <- Z2 - 1
+        Y <- Y + 1
+    IF Z2 != 0 GOTO C
+    ; End of the section to perform Y <- Y + Z1.
+
+[E] PASS                    ; Do nothing. Simply end the program.
+; End T1.
+
+; T2: Rewrite T1 without using macros.
+;
+    IF X != 0 GOTO A
+        Z1 <- Z1 + 1            ; Z1 = true
+        IF Z1 != 0 GOTO E
+
+    ; Set Z2 to X, with X set to 0.
+[A]     Z2 <- Z2 + 1
+        X <- X - 1
+    IF X != 0 GOTO A
+    ; Then add Z2 to X and Y.
+    ; So that X = X and Y = Y + X
+[B]     Z2 <- Z2 - 1
+        X <- X + 1
+        Y <- Y + 1
+    IF Z2 != 0 GOTO B
+
+    ; Repeat twice more
+[C]     Z2 <- Z2 + 1
+        X <- X - 1
+    IF X != 0 GOTO C
+[D]     Z2 <- Z2 - 1
+        X <- X + 1
+        Y <- Y + 1
+    IF Z2 != 0 GOTO D
+
+[F]     Z2 <- Z2 + 1
+        X <- X - 1
+    IF X != 0 GOTO F
+[G]     Z2 <- Z2 - 1
+        X <- X + 1
+        Y <- Y + 1
+    IF Z2 != 0 GOTO G
+
+[E] PASS
+; End T2.
+
+; T3: f(x) = (1 IF x is even ELSE 0).
+; Keep subtracting from X, while setting Y to 0, then 1, repeatly.
+    Y <- Y + 1              ; 0 is even.
+    
+    ; Start subtracting.
+[C]     IF X != 0 GOTO A
+            GOTO E
+[A]     X <- X - 1          ; IF X = 0 after this, X is odd initially.
+        Y <- 0
+
+        IF X != 0 GOTO B
+            GOTO E
+[B]     X <- X - 1          ; IF X = 0 after this, X is even initially.
+        Y <- Y + 1
+    IF X != 0 GOTO C
+    ; End subtracting.
+
+[E] PASS
+; End T3.
+
+; T4: f(x) = (1 IF x is even ELSE undefined).
+; Almost the same as T3, but we cannot play on Y directly.
+; Let Z1 = (0 IF x is even ELSE 1),
+; then Y = 1 if Z1 = 0, otherwise let Y unset.
+    ; Y <- undefined        ; Y is undefined now.
+    Z1 <- 0                 ; 0 is even.
+    
+[C]     IF X != 0 GOTO A
+            GOTO D
+[A]     X <- X - 1          ; IF X = 0 after this, X is odd initially.
+        Z1 <- Z1 + 1
+
+        IF X != 0 GOTO B
+            GOTO D
+[B]     X <- X - 1          ; IF X = 0 after this, X is even initially.
+        Z1 <- 0
+    IF X != 0 GOTO C
+    ; End subtracting.
+
+[D] IF Z1 != 0 GOTO E       ; Set Y.
+        Y <- Y + 1
+[E] PASS
+; End T4.
+
+; T5: f(x1, x2) = (1 IF x1 = x2 ELSE 0). No macro allowed.
+; Keep subtracting from both x1 and x2, until at least one of them is 0.
+; Then if both are 0, f = 1, otherwise f = 0.
+; Let z = 0 initially, and for each xn = 0 (n = 1,2), let z += 1.
+; Then y = (0 IF z = 1 ELSE 1) = z - 1 (note that z can only be 1 or 2).
+    Z2 <- Z2 + 1                ; Z2 = true
+
+    ; Start subtracting.
+        ; If any equals to 0, stop subtracting.
+        ; Checks needs to be done first, since the subtracting step is atomic.
+[C]     IF X1 != 0 GOTO A
+            IF Z2 != 0 GOTO D   ; break
+        
+[A]     IF X2 != 0 GOTO B
+            IF Z2 != 0 GOTO D   ; break
+
+[B]     X1 <- X1 - 1
+        X2 <- X2 - 1
+    IF Z2 != 0 GOTO C
+    ; End subtracting.
+
+[D] IF X1 != 0 GOTO F
+        Y <- Y + 1
+[F] IF X2 != 0 GOTO G
+        Y <- Y + 1
+[G] Y <- Y - 1
+[E] PASS
