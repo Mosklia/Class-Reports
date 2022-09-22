@@ -15,3 +15,6 @@ _*
 *.bbl
 *.blg
 **/personal_info/
+*.xdv
+*.fls
+*.fdb_latexmk
