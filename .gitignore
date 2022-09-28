@@ -18,3 +18,4 @@ _*
 *.xdv
 *.fls
 *.fdb_latexmk
+**/build/
