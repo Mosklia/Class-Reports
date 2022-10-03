@@ -12,5 +12,6 @@
         "types.h": "c",
         "stdlib.h": "c",
         "shm.h": "c"
-    }
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/computer graphics/homework 01/src"
 }
