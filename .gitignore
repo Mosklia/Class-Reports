@@ -20,3 +20,6 @@ _*
 *.fdb_latexmk
 **/build/
 **/.cache/
+**/*.lol
+**/*.lof
+**/*.lot
