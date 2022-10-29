@@ -1,0 +1,137 @@
+\documentclass[12pt,titlepage]{ctexart}
+
+\usepackage{graphicx}
+\usepackage[a4paper,left=2.5cm,right=2.5cm,top=3.5cm,bottom=2.5cm]{geometry}
+\usepackage{indentfirst}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{gbt7714}
+\usepackage[defaultmono,scale=0.85]{droidsansmono}
+\usepackage{minted}
+\usepackage{color}
+\usepackage[xetex,colorlinks=true]{hyperref}
+
+\bibliographystyle{gbt7714-numerical}
+
+\fontsize{14pt}{1.0}
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}
+
+\newlength{\blanklength}
+\setlength{\blanklength}{40ex}
+
+\providecommand{\thetitle}{上海精神——新时代的国际行为准则}
+\providecommand{\theauthor}{Sparky\_14145}
+\providecommand{\thestudentID}{71XXXXXX}
+\providecommand{\theemail}{Sparky\_14145@outlook.com}
+\providecommand{\theinstitution}{College of Software Engineering}
+\providecommand{\theshortinstitution}{CoSE}
+\providecommand{\theclass}{71XXXX}
+
+\setCJKmainfont{FandolSong}[BoldFont=FandolHei]
+\ctexset{
+    section = {
+        name    = {},
+        number  = \chinese{section} 
+    }
+}
+
+\pagestyle{myheadings}
+\markboth{\theauthor \thestudentID 软件工程 711202}{陈宇轩 71120226 软件工程 711202}
+
+
+\input{personal_info/info.tex}
+
+\providecommand{\blankToFill}[1]{
+    \parbox[t][3ex]{\blanklength}{
+        \makebox[\blanklength]{#1}\\[0pt]
+        \rule[2ex]{\blanklength}{0.1ex}
+    }
+}
+
+\providecommand{\makecover}{\begin{titlepage}
+    \noindent
+    {东南大学} \\[2pt]
+    {\Large \bfseries 课程报告}
+
+    \vspace*{60pt}
+    \begin{center}
+    \includegraphics[width=0.8\textwidth]{pics/cover.png} \\
+        \textsc{\Huge 形势与政策} \\[4pt]
+        \textsc{\Large 课程报告}
+
+        \vspace*{10pt}
+        \begin{tabular}[c]{rc}
+            题目        & \blankToFill{\thetitle} \\
+            日期        & \blankToFill{\today} \\
+            姓名        & \blankToFill{\theauthor\footnotemark} \\
+            学号        & \blankToFill{\thestudentID} \\
+            学院        & \blankToFill{\theinstitution} 
+        \end{tabular}
+        \rmfamily
+    \end{center}
+
+    \vspace*{0pt}
+    \footnotetext{\theemail}
+\end{titlepage}}
+\begin{document}
+    % \makecover
+
+    % \tableofcontents
+    % \newpage
+
+    \begin{center}
+        \large
+        \textbf{上海精神：新时代的国际行为准则}
+    \end{center}
+
+    \section{前言}
+
+    二十一年前，《上海合作组织成立宣言》签订，上海合作组织也随之成立。在《宣言》中，``上海五国''合作多年积累出来的国际间行为准则，即``互信、互利、平等、协商、尊重多样文明、谋求共同发展''\cite{sco-declaration}，有了一个后来国际上人尽皆知的名字：上海精神。二十一年来，世界格局已经发生了天翻地覆的变化，而在时间的考验下，上海精神不但没有随着时代的变化而``退环境''，反而是日久弥新，并在一次次的国际事件带来的挑战与机遇中，证明了自己的价值。
+
+    \section{历史}
+
+    上合组织的前身是“上海五国”会晤机制。苏联解体后，在毗邻中国的周边出现了俄罗斯、哈萨克斯坦、吉尔吉斯斯坦和塔吉克斯坦等四个新的邻国，如何处理彼此的关系，尤其是处理苏联遗留下来的边界问题，刻不容缓地摆在了五国面前，正是本着“上海精神”的基本理念，五国成功地解决了边界问题，为世界其他地区解决类似问题树立了典范。
+
+    但形势在变化，世界多极化、经济全球化成为历史潮流，区域合作范围也逐步扩大到安全防护和经济民生上，上合组织在此背景下应运而生。2001年1月，乌兹别克斯坦提出作为正式成员加入“上海五国”。2001年6月15日，在上海举行的峰会上，六国元首签署了《上海合作组织成立宣言》，上海合作组织正式诞生。不同于以往西方主导的国际组织，上合组织提出并践行了新的理念，这就是“上海精神”。
+
+    “上海精神”贯穿了上合组织的发展历程，逐步成为各国共同协作的思想基础和精神纽带。在“上海精神”的指引下，上合组织各国全面推进各领域合作，在国际和地区事务中积极发挥建设性的作用，树立了“相互尊重、公平正义、合作共赢”的新型国际关系典范。17年的实践证明，“上海精神”是推动构建人类命运共同体的有益尝试，是上合组织贡献给世界的“上合智慧”“上合方案”\cite{sh-spirit-what}。
+
+    \section{内涵}
+
+    前驻吉尔吉斯斯坦大使王开文表示，“上海精神”的内涵非常丰富，体现了上海合作组织新型的安全观、合作观和发展观。前土库曼斯坦大使吴虹彬介绍，“上海精神”的内涵就是化“对立猜疑”为“对话合作”\cite{sh-spirit-what-xi}。而国家主席习近平同志对于``上海精神''，则无疑有着更为深刻的认识...
+
+    \subsection{坚守、坚持与践行}
+
+    2014 年，在上海合作组织成员国元首理事会第十四次会议上的讲话中，习近平同志指出``我们要本着对地区乃至世界和平、稳定、发展高度负责的态度，牢固树立同舟共济、荣辱与共的命运共同体、利益共同体意识，凝心聚力，精诚协作，全力推动上海合作组织朝着机制更加完善、合作更加全面、协调更加顺畅、对外更加开放的方向发展，为本地区人民造福。''，一连用四个``我们要坚持''（``我们要坚持以维护地区安全稳定为己任''、``我们要坚持以实现共同发展繁荣为目标''、``我们要坚持以促进民心相通为宗旨''、``我们要坚持以扩大对外交流合作为动力''）来强调上海精神中坚守、坚持与践行的重要性\cite{xi-2014}。
+
+    \subsection{安全是发展的前提}
+
+    习近平同志在上海合作组织成员国元首理事会第十三次会议上的讲话中指出，`` `三股势力'、贩毒、跨国有组织犯罪威胁着本地区安全稳定''，并呼吁大家``共同维护地区安全稳定''，强调``。安全稳定的环境是开展互利合作、实现共同发展繁荣的必要条件。要落实《打击恐怖主义、分裂主义和极端主义上海公约》及合作纲要，完善本组织执法安全合作体系，赋予地区反恐怖机构禁毒职能，并在此基础上建立应对安全威胁和挑战综合中心。各成员国相关部门也应该建立日常信息沟通渠道，探讨联合行动方式，合力打击“三股势力”，为本地区各国人民生产生活创造良好环境''\cite{xi-2013}。
+
+    \subsection{实现共同发展繁荣}
+
+    习近平同志在上海合作组织成员国元首理事会第十三次会议上的讲话中强调，上海合作组织的各成员国要``着力发展务实合作''，指出``务实合作是上海合作组织发展的物质基础和原动力''，并认为``上海合作组织 6 个成员国和 5 个观察员国都位于古丝绸之路沿线。作为上海合作组织成员国和观察员国，我们有责任把丝绸之路精神传承下去，发扬光大''\cite{xi-2013}。
+
+    此外，就如何落实``共同发展繁荣''，习近平同志还提出了五点切实可行的建议\cite{xi-2013}：
+
+    \paragraph{开辟交通和物流大通道}：尽快签署《国际道路运输便利化协定》。《协定》签署后，建议按照自愿原则广泛吸收观察员国参与，从而通畅从波罗的海到太平洋、从中亚到印度洋和波斯湾的交通运输走廊；
+
+    \paragraph{商谈贸易和投资便利化协定}：在充分照顾各方利益和关切基础上寻求在贸易和投资领域广泛开展合作，充分发挥各成员国合作潜力，实现优势互补，促进共同发展繁荣；
+
+    \paragraph{加强金融领域合作}：推动建立上海合作组织开发银行，为本组织基础设施建设和经贸合作项目提供融资保障和结算平台。同时，尽快设立上海合作组织专门账户，为本组织框架内项目研究和交流培训提供资金支持。用好上海合作组织银行联合体这一机制，加强本地区各国金融机构交流合作；
+
+    \paragraph{成立能源俱乐部}：协调本组织框架内能源合作，建立稳定供求关系，确保能源安全，同时在提高能效和开发新能源等领域开展广泛合作；
+
+    \paragraph{建立粮食安全合作机制}：在农业生产、农产品贸易、食品安全等领域加强合作，确保粮食安全。
+    
+    \subsection{促进民心相通}
+
+    习近平同志在上海合作组织成员国元首理事会第十四次会议上的讲话中指出，``我们要坚持以促进民心相通为宗旨''，倡议上海合作组织各国加强媒体合作，举办上海合作组织媒体合作论坛，并支持各国在公共政策、政府管理等方面交流经验，愿意在2015年至2017年间，为本组织成员国提供2000名官员、管理、技术人才培训名额，未来5年内每年邀请50名上海合作组织国家青年领导人来华研修，表示将依托中国—上海合作组织国际司法交流合作培训基地，协助成员国培训司法人才\cite{xi-2014}。
+
+    \subsection{扩大对外交流合作}
+
+    习近平同志在上海合作组织成员国元首理事会第十四次会议上的讲话中指出，``我们要坚持以扩大对外交流合作为动力''，扩大对外交往、吸收新鲜血液，是上海合作组织自身发展壮大的需要，也符合本组织一贯奉行的开放包容方针。习近平欢迎有意愿且符合标准的国家申请成为本组织正式成员，为组织发展注入新的活力。习近平同志强调，要加强成员国同观察员国合作，密切同对话伙伴的沟通，继续完善“6＋5”工作机制，切实将观察员国和对话伙伴吸引到本组织相关合作中来。我们要密切同联合国及其相关机构、独联体、欧亚经济共同体、集安条约组织等国际和地区组织合作，相互借鉴经验\cite{xi-2014}。
+
+    \nocite{*}
+    \bibliography{citations}
+\end{document}
