@@ -1,0 +1,18 @@
+digraph {
+    node[shape="circle"];
+    rankdir="LR";
+    S[shape="none",label=""];
+    F[shape="doublecircle"]
+    S -> A [label="Start"];
+    A -> A [label="[eiou]|others"]
+    A -> B [label="a"];
+    B -> B [label="[aiou]|others"];
+    B -> C [label="e"];
+    C -> C [label="[aeou]|others"];
+    C -> D [label="i"];
+    D -> D [label="[aeiu]|others"];
+    D -> E [label="o"];
+    E -> E [label="[aeio]|others"];
+    E -> F [label="u"];
+    F -> F [label="[aeiou]|others"]
+}
