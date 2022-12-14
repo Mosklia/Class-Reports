@@ -1,0 +1,52 @@
+\documentclass{ctexart}
+
+\usepackage{graphicx}
+\usepackage[defaultmono,scale=0.85]{droidsansmono}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[hmargin=1.1in,vmargin=1in]{geometry}
+
+\newcommand{\theauthor}{Sparky\_14145}
+
+\input{personal_info/info.tex}
+
+\title{计算机图形 作业六}
+\author{\theauthor}
+
+\begin{document}
+    \maketitle
+
+    \section{函数流程}
+
+    \subsection{\texttt{Rope::Rope}}
+
+    整条绳索的构造函数。
+
+    具体的操作流程如下：
+    \begin{enumerate}
+        \item 对于每个绳子结点：
+        \begin{enumerate}
+            \item 计算出它所在的位置（公式：$\mathrm{pos} = t \times \mathrm{end} + (1 - t) \times \mathrm{begin}$，其中 $t$ 结点编号减 1 除以结点总数减 1）；
+            \item 利用其位置、质量创建质点，将其速度设为 0，并且将其加入质点集合；
+            \item 用线段（\texttt{String}）将其与前一个质点相连接。
+        \end{enumerate}
+        \item 将固定结点列表中的点标记为固定。
+    \end{enumerate}
+
+    \subsection{\texttt{Rope::simulateEuler}}
+
+    模拟半隐式欧拉法。
+
+    首先计算每条线对每个质点的作用力，对各个质点进行累加。然后将重力再加到质点上，用 $F = ma$、$\Delta v = a \Delta t$ 与 $\Delta x = v \Delta t$ 计算出质点的新速度与新位置，最后清空累加的力（便于下一轮模拟计算）。
+
+    \subsection{\texttt{Rope::simulateVerlet}}
+
+    先同半隐式欧拉法计算出加速度，然后套公式更新坐标就行了。
+
+    \section{运行结果}
+
+    \begin{center}
+        \includegraphics[width=0.9\textwidth]{pics/result-1.png} \\
+        \includegraphics[width=0.9\textwidth]{pics/result-2.png}
+    \end{center}
+\end{document}
