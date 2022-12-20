@@ -1,0 +1,752 @@
+\documentclass{ctexbeamer}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{subfig}
+\usepackage{graphicx}
+\usepackage[defaultmono,scale=0.85]{droidsansmono}
+\usepackage{tikz}
+\usepackage{minted}
+\usepackage{color}
+% \usepackage{mdframed}
+% \usepackage[colorlink=true,xetex]{hyperref}
+
+\usetheme{Madrid}
+\usefonttheme[onlymath]{serif}
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}
+\setCJKmonofont{WenQuanYi Micro Hei Mono}
+% \surroundwithmdframed{minted}
+
+\usetikzlibrary{graphdrawing, graphs, quotes, shapes}
+\usegdlibrary{trees}
+\tikzset{
+    noleaf/.style={draw,ellipse,fill=red!60},
+    ref/.style={draw,ellipse,fill=green!40},
+    normal/.style={draw,ellipse},
+    every picture/.style={}
+}
+
+\setminted{bgcolor=codebg,autogobble,breaklines}
+\setmintedinline{bgcolor=codebg}
+
+\newcommand{\theauthor}{Sparky\_14145}
+\newcommand{\theinst}{College of Software Engineering}
+\newcommand{\theshortinst}{CoSE}
+
+\input{personal_info/info.tex}
+
+\author{\theauthor}
+\institute[\theshortinst]{\theinst}
+\title{使用 Triton 实现符号执行}
+\subtitle{第 13 章}
+
+\begin{document}
+    \begin{frame}
+        \titlepage
+    \end{frame}
+
+    \begin{frame}
+        \frametitle{目录}
+        \tableofcontents
+    \end{frame}
+
+    \section{Triton 简介}
+    \begin{frame}
+        \frametitle{Triton 简介}
+    
+        Triton 是一款免费的开源二进制文件分析库，允许用户构建自己的二进制分析程序，以对符号执行的支持而闻名。
+
+        Triton 拥有以下特性：
+
+        \begin{enumerate}
+            \item 支持动态符号执行；\pause
+            \item 支持污点分析；\pause
+            \item 支持以下指令集架构的 AST 表示：x86, x86\_64, ARM32 和 AArch64；\pause
+            \item 提供 C++ 和 Python API；\pause
+            \item 以及更多其他特性...
+        \end{enumerate}
+    
+    \end{frame}
+
+    \section{抽象语法树}
+    \begin{frame}[fragile]
+        \frametitle{抽象语法树}
+    
+        Triton 将符号表达式和约束条件表示为抽象语法树（abstract syntax tree, AST）。
+
+        抽象语法树描述了操作和操作数之间的语法关系，如图 \ref{fig:ast-example} 所示为汇编指令 \mintinline{nasm}{shr eax, cl} 所对应的抽象语法树：
+
+        \begin{figure}
+            \centering
+            \begin{tikzpicture}
+                \graph[binary tree layout, nodes=normal]{
+                    "bvlshr"[noleaf] -> {
+                        bv1[as=bv,noleaf] -> {"$\alpha_1$", "32"},
+                        "concat"[noleaf] -> {
+                            bv2[as=bv,noleaf] -> {"0", "24"},
+                            bv3[as=bv,noleaf] -> {"$\alpha_2$", "8"}
+                        }
+                    }
+                };
+            \end{tikzpicture}
+            \caption{抽象语法树举例}
+            \label{fig:ast-example}
+        \end{figure}
+
+    
+    \end{frame}
+
+    \subsection{使用引用的抽象语法树}
+
+    \begin{frame}
+        \frametitle{使用引用的抽象语法树}
+        \framesubtitle{抽象语法树}
+    
+        图 \ref{fig:ast-example} 展示了一棵完整抽象语法树。可以看到，完整抽象语法树往往包含了所有结点的信息，因此无法较好地复用各个子树来节省内存空间。\pause
+
+        一种解决方案就是使用引用。\pause
+
+        \begin{figure}
+            \small
+            \centering
+            \subfloat[\texttt{eax}的抽象语法树]{
+                \centering
+                \begin{tikzpicture}
+                    \graph[binary tree layout, nodes=normal]{
+                        bv["ref!1",noleaf] -> {"$\alpha_1$", 32}
+                    };
+                \end{tikzpicture}
+            }\;
+            \subfloat[\texttt{cl}的抽象语法树]{
+                \centering
+                \begin{tikzpicture}
+                    \graph[binary tree layout, nodes=normal]{
+                        bv["ref!2",noleaf] -> {"$\alpha_2$", 8}
+                    };
+                \end{tikzpicture}
+            }\;
+            \subfloat[\texttt{cl}的抽象语法树]{
+                \centering
+                \begin{tikzpicture}
+                    \graph[binary tree layout, nodes=normal]{
+                        "bvlshr"[noleaf] -> {
+                            "ref!1"[ref],
+                            "concat"[noleaf] -> {
+                                bv2[as=bv,noleaf] -> {"0", "24"},
+                                "ref!2"[ref]
+                            }
+                        }
+                    };
+                \end{tikzpicture}
+            }\\
+            \caption{使用引用重构的抽象语法树}
+            \label{fig:ast-with-ref}
+        \end{figure}
+    
+    \end{frame}
+
+    \begin{frame}
+    
+        如 \ref{fig:ast-with-ref} 所示，通过设立一种特殊的``引用结点''，Triton 在构建大型的抽象语法树时，无需完整地复制所有的结点，而只需要使用引用结点就能引用别的语法树，从而提高了性能。
+    
+    \end{frame}
+
+    \section{使用 Triton 进行后向切片}
+
+    \begin{frame}[fragile]
+        \frametitle{使用 Triton 进行后向切片}
+    
+        后向切片是一种二进制分析技术，它可以告诉你在执行过程中的某个时刻，之前的哪些指令会影响给定寄存器或内存地址的值。\pause
+
+        举例来说有一个未知的可执行文件 \mintinline{text}{test}，如清单所示：
+
+        {
+            \scriptsize
+            \begin{minted}[highlightlines={8}]{text}
+                $ objdump -M intel -d test
+                ...
+                4010cc:	00 00 00 
+                4010cf:	90                   	nop
+                4010d0:	b8 40 40 40 00       	mov    eax,0x404040
+                4010d5:	48 3d 40 40 40 00    	cmp    rax,0x404040
+                4010db:	74 13                	je     4010f0 <_ZNSolsEi@plt+0x70>
+                4010dd:	48 8b 05 e4 2e 00 00 	mov    rax,QWORD PTR [rip+0x2ee4]
+                4010e4:	48 85 c0             	test   rax,rax
+                ...
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+
+        我们想要知道在地址 \mintinline{text}{4010dd} 及之前哪些指令影响过寄存器 \mintinline{text}{rax} 的值，观察可知其中应至少包含以下指令：
+
+        {
+            \scriptsize
+            \begin{minted}{text}
+                4010d0:	b8 40 40 40 00       	mov    eax,0x404040
+                4010dd:	48 8b 05 e4 2e 00 00 	mov    rax,QWORD PTR [rip+0x2ee4]
+            \end{minted}
+        }
+
+        于是我们尝试用 Triton 实现。\pause
+
+        整体实现的伪代码如下：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                void backward_slicing() {
+                    打开二进制文件;
+                    设定体系结构;
+                    根据配置文件初始化内存与寄存器;
+                    逐条分析指令;
+                }
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{打开二进制文件}
+        \framesubtitle{使用 Triton 进行后向切片}
+    
+        使用第四章使用的二进制加载器，打开二进制文件的代码很简单：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                std::string fname(argv[1]);
+                // if(load_binary(fname, &bin, Binary::BinaryFormat::AUTO) < 0) return 1;
+                if (Binary *tmp = Binary::from_file(fname); tmp == nullptr) {
+                    return 1;
+                } else {
+                    bin = *tmp;
+                }
+            \end{minted}
+        }
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{设定体系结构}
+        \framesubtitle{使用 Triton 进行后向切片}
+    
+        设置体系结构的过程由一个名为 \mintinline{cpp}{set_triton_arch} 的函数完成：
+
+        {
+            \footnotesize
+            \begin{minted}{cpp}
+                if(set_triton_arch(bin, api, ip) < 0) return 1;
+            \end{minted}
+        }
+        \pause
+        而这个函数也只是检查文件的架构是否为 x86，并依据位宽调整 Triton API。核心代码如下：
+
+        {
+            \footnotesize
+            \begin{minted}{cpp}
+                int set_triton_arch(bin, api, ip) {
+                    // ...（检查是否为 X86 架构）
+                    if (bin.bits == 32) {        // 32 位
+                        api.setArchitecture(triton::arch::ARCH_X86);
+                        ip = triton::arch::ID_REG_X86_EIP;
+                    } else if (bin.bits == 64) { // 64 位
+                        api.setArchitecture(triton::arch::ARCH_X86_64);
+                        ip = triton::arch::ID_REG_X86_RIP;
+                    }
+                    // ...（提示错误，并根据是否成功设置返回不同的返回值）
+                }
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{根据配置文件初始化内存与寄存器}
+        \framesubtitle{使用 Triton 进行后向切片}
+    
+        这一部分主要调用 Triton API 完成，具体而言就是遍历配置文件中每一处内存与寄存器，并将其初始值设定为配置文件中的给定值；而解析配置文件的操作也可以由 \mintinline{text}{triton_util} 内的函数完成：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                std::map<triton::arch::register_e, uint64_t> regs;
+                std::map<uint64_t, uint8_t> mem;
+
+                if(parse_sym_config(argv[2], &regs, &mem) < 0) return 1;
+                for(auto &kv: regs) {   // 处理寄存器
+                    triton::arch::Register r = api.getRegister(kv.first);
+                    api.setConcreteRegisterValue(r, kv.second);
+                }
+                for(auto &kv: mem) {    // 处理内存
+                    api.setConcreteMemoryValue(kv.first, kv.second);
+                }
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{逐条分析指令}
+        \framesubtitle{使用 Triton 进行后向切片}
+    
+        逐条分析指令是后向切片程序的重头戏，这部分的伪代码如下：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                将 PC 初始化为给定入口点;
+                将 slice_addr 设定为给定切片地址;
+                while (PC 位于 .text 段中) {
+                    解析并反汇编 PC 所指向的一条命令;
+                    将指令的人类可读形式保存为指令的注释;
+                    if (PC == slice_addr) {
+                        输出切片;
+                        break;
+                    }
+                    更新 PC;
+                }
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+    
+        下面来看具体的代码：
+
+        {
+            \small
+            \begin{minted}[highlightlines={1-2}]{cpp}
+                uint64_t pc         = strtoul(argv[3], NULL, 0);
+                uint64_t slice_addr = strtoul(argv[4], NULL, 0);
+                Section *sec = bin.get_text_section();
+                
+                while (sec->contains(pc)) {
+                    char mnemonic[32], operands[200];
+                    int len = disasm_one(sec, pc, mnemonic, operands);
+                    if(len <= 0) return 1;
+
+                    triton::arch::Instruction insn;
+                    insn.setOpcode(&(sec->bytes[pc-sec->vma]), len);
+                    insn.setAddress(pc);
+
+                    api.processing(insn);
+                    // ...
+                }
+            \end{minted}
+        }
+
+        直接从命令行参数取得切片入口和切片地址。
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+
+        {
+            \small
+            \begin{minted}[highlightlines={3-5}]{cpp}
+                uint64_t pc         = strtoul(argv[3], NULL, 0);
+                uint64_t slice_addr = strtoul(argv[4], NULL, 0);
+                Section *sec = bin.get_text_section();
+                
+                while (sec->contains(pc)) {
+                    char mnemonic[32], operands[200];
+                    int len = disasm_one(sec, pc, mnemonic, operands);
+                    if(len <= 0) return 1;
+
+                    triton::arch::Instruction insn;
+                    insn.setOpcode(&(sec->bytes[pc-sec->vma]), len);
+                    insn.setAddress(pc);
+
+                    api.processing(insn);
+                    // ...
+                }
+            \end{minted}
+        }
+
+        循环条件：PC 必须在文件的 \mintinline{text}{.text} 节中。\pause
+
+        思考：这样的条件可能带来什么样的缺陷？
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+
+        {
+            \small
+            \begin{minted}[highlightlines={6-8}]{cpp}
+                uint64_t pc         = strtoul(argv[3], NULL, 0);
+                uint64_t slice_addr = strtoul(argv[4], NULL, 0);
+                Section *sec = bin.get_text_section();
+                
+                while (sec->contains(pc)) {
+                    char mnemonic[32], operands[200];
+                    int len = disasm_one(sec, pc, mnemonic, operands);
+                    if(len <= 0) return 1;
+
+                    triton::arch::Instruction insn;
+                    insn.setOpcode(&(sec->bytes[pc-sec->vma]), len);
+                    insn.setAddress(pc);
+
+                    api.processing(insn);
+                    // ...
+                }
+            \end{minted}
+        }
+
+        使用 \mintinline{text}{capstone} 反汇编当前指令。\pause
+
+        其中 \mintinline{cpp}{disasm_one()} 是定义在 \mintinline{text}{disasm_util.cc} 中的函数，这里不展开讲。
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+
+        {
+            \small
+            \begin{minted}[highlightlines={10-14}]{cpp}
+                uint64_t pc         = strtoul(argv[3], NULL, 0);
+                uint64_t slice_addr = strtoul(argv[4], NULL, 0);
+                Section *sec = bin.get_text_section();
+                
+                while (sec->contains(pc)) {
+                    char mnemonic[32], operands[200];
+                    int len = disasm_one(sec, pc, mnemonic, operands);
+                    if(len <= 0) return 1;
+
+                    triton::arch::Instruction insn;
+                    insn.setOpcode(&(sec->bytes[pc-sec->vma]), len);
+                    insn.setAddress(pc);
+
+                    api.processing(insn);
+                    // ...
+                }
+            \end{minted}
+        }
+
+        复制指令，并让 Triton 去模拟执行这条指令。
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+
+        {
+            \scriptsize
+            \begin{minted}[highlightlines={3-6}]{cpp}
+                while (sec->contains(pc)) {
+                    // ...
+                    for (auto &se: insn.symbolicExpressions) {
+                        std::string comment = mnemonic; comment += " "; comment += operands;
+                        se->setComment(comment);
+                    }
+
+                    if (pc == slice_addr) {
+                        print_slice(api, sec, slice_addr, get_triton_regnum(argv[5]), argv[5]);
+                        break;
+                    }
+
+                    pc = (uint64_t)api.getConcreteRegisterValue(api.getRegister(ip));
+                }
+            \end{minted}
+        }
+
+        为每条符号化的指令加上注释。\pause
+
+        因为 Triton 在内部会将指令转化为 SMT-LIB 2.0 格式的符号表达式，所以一条汇编指令可能会产生多个符号表达式。为了从这种表达式生成 x86 汇编指令，我们需要遍历所有的符号表达式。
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+
+        {
+            \scriptsize
+            \begin{minted}[highlightlines={8-11}]{cpp}
+                while (sec->contains(pc)) {
+                    // ...
+                    for (auto &se: insn.symbolicExpressions) {
+                        std::string comment = mnemonic; comment += " "; comment += operands;
+                        se->setComment(comment);
+                    }
+
+                    if (pc == slice_addr) {
+                        print_slice(api, sec, slice_addr, get_triton_regnum(argv[5]), argv[5]);
+                        break;
+                    }
+
+                    pc = (uint64_t)api.getConcreteRegisterValue(api.getRegister(ip));
+                }
+            \end{minted}
+        }
+
+        打印给定的寄存器的切片。\pause
+
+        \mintinline{cpp}{get_triton_regnum} 是定义于 \mintinline{text}{triton_util.cc} 的一个函数，用来将字符串转化为 \mintinline{cpp}{triton::register_e} 枚举类型，实现较简单。
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+
+        {
+            \scriptsize
+            \begin{minted}[highlightlines={8-11}]{cpp}
+                while (sec->contains(pc)) {
+                    // ...
+                    for (auto &se: insn.symbolicExpressions) {
+                        std::string comment = mnemonic; comment += " "; comment += operands;
+                        se->setComment(comment);
+                    }
+
+                    if (pc == slice_addr) {
+                        print_slice(api, sec, slice_addr, get_triton_regnum(argv[5]), argv[5]);
+                        break;
+                    }
+
+                    pc = (uint64_t)api.getConcreteRegisterValue(api.getRegister(ip));
+                }
+            \end{minted}
+        }
+
+        更新 PC 的值，使其指向下一条指令（Triton 内部寄存器 \mintinline{text}{ip} 已经被自动更新了）。
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{计算后向切片}
+        \framesubtitle{使用 Triton 进行后向切片}
+    
+        计算后向切片的实质就是输出所有 Triton 执行过的，与目标寄存器有关的指令。\pause
+
+        代码中计算后向切片的函数为 \mintinline{text}{print_slice}，其流程如下：\pause
+
+        \begin{enumerate}
+            \item 获取目标寄存器的符号表达式 \mintinline{text}{regExpr}；\pause
+            \item 获取符号表达式 \mintinline{text}{regExpr} 的切片；\pause
+            \item 输出切片中每一个符号表达式的注释；\pause
+            \item 反汇编当前（切片地址）的一条指令。\pause
+        \end{enumerate}
+
+        核心代码如下：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                auto regExpr = api.getSymbolicRegisters()[reg];
+                auto slice = api.sliceExpressions(regExpr);
+                for (auto &kv: slice) {
+                    printf("%s\n", kv.second->getComment().c_str());
+                }
+                // 反编译一条指令的代码可参考 main 函数
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \section{使用 Triton 提升代码覆盖率}
+    \begin{frame}[fragile]
+        \frametitle{使用 Triton 提升代码覆盖率}
+
+        提升代码覆盖率的目的在于：探索程序运行时，已知某个输入对应的输出时，希望得到另一组输入，且此输入会产生另一个输出。
+    
+        \mintinline{cpp}{code_coverage} 的伪代码如下：
+    
+        {
+            \small
+            \begin{minted}{cpp}
+                void backward_slicing() {
+                    打开二进制文件;
+                    设定体系结构;
+                    根据配置文件初始化内存与寄存器;
+                    符号化内存与寄存器;
+                    逐条分析指令;
+                }
+            \end{minted}
+        }
+
+        其中打开二进制文件、设定体系结构与初始化过程与后向切片相同，不再赘述。
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{符号化内存与寄存器}
+        \framesubtitle{使用 Triton 提升代码覆盖率}
+
+        实际上只有那些配置文件调整过的内存与寄存器需要手动符号化。
+    
+        符号化内存与寄存器的代码如下：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                for(auto regid: symregs) {
+                    triton::arch::Register r = api.getRegister(regid);
+                    api.symbolizeRegister(r)->setComment(r.getName());
+                }
+                for(auto memaddr: symmem) {
+                    api.symbolizeMemory(triton::arch::MemoryAccess(memaddr, 1))
+                        ->setComment(std::to_string(memaddr));
+                }
+            \end{minted}
+        }\pause
+
+        主要工作就是利用 \mintinline{cpp}{symbolize} 系列方法和 \mintinline{cpp}{setComment} 来设置注释方便以后打印。
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{逐条分析指令}
+        \framesubtitle{使用 Triton 提升代码覆盖率}
+    
+        逐条分析指令的伪代码如下：
+        
+        {
+            \small
+            \begin{minted}{cpp}
+                将 PC 初始化为给定入口点;
+                将 branch_addr 设定为给定切片地址;
+                while (PC 位于 .text 段中) {
+                    解析并反汇编 PC 所指向的一条命令;
+                    将指令的人类可读形式保存为指令的注释;
+                    if (PC == branch_addr) {
+                        寻找新分支路径;
+                        break;
+                    }
+                    更新 PC;
+                }
+            \end{minted}
+        }
+
+        实际上，除了寻找新分支路径以外所有的部分都与后向切片相同，故不赘述。
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{寻找新分支路径}
+        \framesubtitle{使用 Triton 提升代码覆盖率}
+    
+        寻找新分支路径的伪代码如下：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                void find_new_input() {
+                    初始化约束列表为 true == true;
+                    for (pc : 所有带分支的路径约束条件) {
+                        for (bc : pc 上的所有分支约束条件) {
+                            if (此分支不是我们想反转的分支 && 此分支被选中) {
+                                将此分支的条件以逻辑 AND 方式添加到约束中;
+                            } else if (此分支未被选中) {
+                                选中此分支;
+                                将此分支的约束以逻辑 AND 方式添加到约束中;
+                                尝试求出并输出约束的一组解;
+                            }
+                        }
+                    }
+                }
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+    
+        初始化约束列表为 \mintinline{cpp}{true == true}：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                auto ast = api.getAstContext();
+                auto constraint_list = ast->equal(ast->bvtrue(), ast->bvtrue());
+            \end{minted}
+        }
+        \pause 程序的所有路径约束可以用 \mintinline{cpp}{API::getPathConstraints()} 来获取，且某个路径的分支约束可以用 \mintinline{cpp}{PathConstraint::getBranchConstraints()} 来获取，于是得到两层循环头的代码：
+
+        {
+            \small
+            \begin{minted}{cpp}
+                const std::vector<triton::engines::symbolic::PathConstraint>
+                    &path_constraints = api.getPathConstraints();
+                for (auto &pc : path_constraints) {
+                    if (!pc.isMultipleBranches())
+                        continue;
+                    for (auto &branch_constraint : pc.getBranchConstraints()) {
+                        // ...（处理单条分支约束）
+                    }
+                }
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+    
+        而处理分支约束的代码如下所示：
+
+        {
+            \scriptsize
+            \begin{minted}{cpp}
+                bool flag = std::get<0>(branch_constraint);
+                uint64_t src_addr = std::get<1>(branch_constraint);
+                uint64_t dst_addr = std::get<2>(branch_constraint);
+                auto constraint = std::get<3>(branch_constraint);
+
+                if (src_addr != branch_addr) {
+                    if (flag) {
+                        constraint_list = ast->land(constraint_list, constraint);
+                    }
+                } else {
+                    printf("    0x%jx -> 0x%jx (%staken)\n", src_addr, dst_addr, flag ? "" : "not ");
+                    if (!flag) {
+                        printf("    computing new input for 0x%jx -> 0x%jx\n", src_addr, dst_addr);
+                    constraint_list = ast->land(constraint_list, constraint);
+                    for (auto &kv : api.getModel(constraint_list)) {
+                        printf("      SymVar %lu (%s) = 0x%jx\n", kv.first,
+                            api.getSymbolicVariable(kv.first)->getComment().c_str(),
+                                (uint64_t)kv.second.getValue());
+                        }
+                    }
+                }
+            \end{minted}
+        }
+    
+    \end{frame}
+
+    \begin{frame}[fragile]
+        \frametitle{测试代码覆盖工具}
+        \framesubtitle{使用 Triton 提升代码覆盖率}
+    
+        编译 \mintinline{text}{branch.c}，然后反编译：
+
+        {
+            \tiny
+            \begin{minted}[highlightlines={6-7}]{objdump-nasm}
+              ...
+              0000000000401146 <branch>:
+                401146:	55                   	push   rbp
+                401147:	48 89 e5             	mov    rbp,rsp
+                40114a:	48 83 ec 10          	sub    rsp,0x10
+                40114e:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
+                401151:	89 75 f8             	mov    DWORD PTR [rbp-0x8],esi
+                401154:	83 7d fc 04          	cmp    DWORD PTR [rbp-0x4],0x4
+                401158:	7f 28                	jg     401182 <branch+0x3c>
+                40115a:	83 7d f8 0a          	cmp    DWORD PTR [rbp-0x8],0xa
+                40115e:	75 11                	jne    401171 <branch+0x2b>
+                401160:	48 8d 05 9d 0e 00 00 	lea    rax,[rip+0xe9d]        # 402004 <_IO_stdin_used+0x4>
+                401167:	48 89 c7             	mov    rdi,rax
+                40116a:	e8 c1 fe ff ff       	call   401030 <puts@plt>
+                40116f:	eb 20                	jmp    401191 <branch+0x4b>
+                401171:	48 8d 05 9d 0e 00 00 	lea    rax,[rip+0xe9d]        # 402015 <_IO_stdin_used+0x15>
+                401178:	48 89 c7             	mov    rdi,rax
+                40117b:	e8 b0 fe ff ff       	call   401030 <puts@plt>
+                401180:	eb 0f                	jmp    401191 <branch+0x4b>
+                401182:	48 8d 05 9d 0e 00 00 	lea    rax,[rip+0xe9d]        # 402026 <_IO_stdin_used+0x26>
+                401189:	48 89 c7             	mov    rdi,rax
+                40118c:	e8 9f fe ff ff       	call   401030 <puts@plt>
+                401191:	90                   	nop
+                401192:	c9                   	leave
+                401193:	c3                   	ret
+              ...
+            \end{minted}
+        }
+    
+    \end{frame}
+\end{document}
