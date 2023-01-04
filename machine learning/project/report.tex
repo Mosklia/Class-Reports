@@ -1,0 +1,161 @@
+\documentclass[12pt]{ctexart}
+
+\usepackage{graphicx}
+\usepackage[hmargin=1.1in,vmargin=1in]{geometry}
+\usepackage{indentfirst}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{gbt7714}
+\usepackage[defaultmono,scale=0.85]{droidsansmono}
+\usepackage{minted}
+\usepackage{xcolor}
+\usepackage[colorlinks=true]{hyperref}
+
+\bibliographystyle{gbt7714-numerical}
+
+\fontsize{14pt}{1.0}
+
+\newlength{\blanklength}
+\setlength{\blanklength}{40ex}
+
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}
+\setminted{bgcolor=codebg,autogobble,breaklines,linenos}
+\setmintedinline{bgcolor=codebg}
+
+\providecommand{\thetitle}{葡萄酒质量预测}
+\providecommand{\theauthor}{Sparky\_14145}
+\providecommand{\thestudentID}{71XXXXXX}
+\providecommand{\theemail}{Sparky\_14145@outlook.com}
+\providecommand{\theinstitution}{College of Software Engineering}
+
+\input{personal_info/info.tex}
+
+\providecommand{\blankToFill}[1]{
+    \parbox[t][3ex]{\blanklength}{
+        \makebox[\blanklength]{#1}\\[0pt]
+        \rule[2ex]{\blanklength}{0.1ex}
+    }
+}
+
+\providecommand{\makecover}{\begin{titlepage}
+    \noindent
+    {东南大学} \\[2pt]
+    {\Large \bfseries 实验报告}
+
+    \vspace*{20pt}
+    \begin{center}
+    \includegraphics[width=0.8\textwidth]{pics/cover.png} \\
+        \textsc{\Huge 机器学习} \\[2pt]
+        \textsc{\huge 课程报告}
+
+        \vspace*{10pt}
+        \begin{tabular}[c]{rc}
+            项目        & \blankToFill{\thetitle} \\
+            日期        & \blankToFill{\today} \\
+            姓名        & \blankToFill{\theauthor\footnotemark} \\
+            学号        & \blankToFill{\thestudentID} \\
+            学院        & \blankToFill{\theinstitution} 
+        \end{tabular}
+        \rmfamily
+    \end{center}
+
+    \vspace*{0pt}
+    \footnotetext{\theemail}
+\end{titlepage}}
+
+\begin{document}
+    \makecover
+
+    \section{项目目标}
+
+    本项目的目标为使用 Kaggle 上的数据集，训练分类器，得到能够根据红酒的各项指标判定红酒质量等级的分类器，并比较不同参数下分类器的表现。
+
+    \section{数据集}
+
+    本项目采用的数据集为 Kaggle 上的 ``Red Wine Quality'' 数据集：\url{https://www.kaggle.com/datasets/uciml/red-wine-quality-cortez-et-al-2009}。
+
+    \section{项目内容}
+
+    本项目使用了 NumPy、Sci-Kit Learn 等 Python 人工智能与数据处理常用的库。
+
+    本项目采用的分类器为决策树分类器，并且将分类器的参数``最大叶结点数''依次设置为 0, 20, 30, 50, 70, 100, 200, 300, 500, 1000 进行测试。测试过程中我将数据集利用 SKLearn 库的 \mintinline{python3}{train_test_split} 函数分割为训练集与验证集进行实验，先用训练集训练各个模型，然后在验证集分别取各个分类器的 MAE 和准确率作为评判标准。{\color{lightgray!20}本来想做 LPBoost 的但是线性规划实在没弄懂所以没能实现算法qwq}
+
+    具体而言，数据集中每个样本共有 12 个特征。本项目中将特征 \mintinline{text}{quality} 作为样本的标签，而将另外 11 个特征用作输入。
+
+    \section{实验结果与分析}
+
+    最终各个分类器的 MAE 和准确率如下表所示：
+
+    \begin{center}
+        \small
+        \begin{tabular}{*{3}{c}}
+            \hline
+            参数 & MAE & 准确率 \\ \hline
+            10 & 0.525 & 0.5425 \\
+            20 & 0.5275 &0.545 \\
+            30 & 0.4475 & 0.605 \\
+            50 & 0.4475 & 0.615 \\
+            70 & 0.4325 & 0.6325 \\
+            100 & 0.44 & 0.6325 \\
+            200 & 0.445 & 0.6425 \\
+            300 & 0.465 & 0.6175 \\
+            500 & 0.4625 & 0.6225 \\
+            1000 & 0.4625 & 0.6225 \\ \hline
+        \end{tabular}
+    \end{center}
+
+    由于参数（最大叶结点数）的含义较为明确，从上表数据中我们可以观察得到以下内容：
+
+    \begin{enumerate}
+        \item 从实验结果来看，参数的最佳取值应该是 200，此时的准确率最高；
+        \begin{itemize}
+            \item MAE 最小值对应的参数为 100，但是考虑到项目中 MAE 的意义并不大（因为 \mintinline{text}{quality} 特征的具体值很可能没有数学意义），故仅供参考；
+            \item 在参数小于 200 时，模型应该处于欠拟合状态，此时叶结点数量过少导致模型无法存有足够的信息对样本进行正确分类；
+            \item 在参数大于 200 时，模型应该处于过拟合状态；
+            \item 参数大于 500 时，叶子数量已经达到最大值，此时提高参数对模型没有实际影响；
+        \end{itemize}
+        \item 决策树可能并不适合用来分类红酒。从结果来看，准确率的最大值也仅有 64.25\%，仅略微优于随机分类器，显然并不适合用于实际应用。
+    \end{enumerate}
+
+    \section{源代码}
+
+    本项目的全部源代码见下：
+
+    \begin{minted}{python3}
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+data_path = "/kaggle/input/red-wine-quality-cortez-et-al-2009/winequality-red.csv"
+data = pd.read_csv(data_path)
+
+# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+from sklearn.model_selection import train_test_split
+
+X = data.drop("quality", axis="columns")
+y = data.quality
+
+train_X, test_X, train_y, test_y = train_test_split(X, y, random_state=0)
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import mean_absolute_error, accuracy_score
+
+leaves_arr = [10, 20, 30, 50, 70, 100, 200, 300, 500, 1000]
+tree_models = [DecisionTreeClassifier(max_leaf_nodes=i, random_state=0) for i in leaves_arr]
+
+for i in tree_models:
+    i.fit(train_X, train_y)
+    predictions = i.predict(test_X)
+    print(mean_absolute_error(test_y, predictions), '\t', accuracy_score(test_y, predictions))
+    \end{minted}
+\end{document}

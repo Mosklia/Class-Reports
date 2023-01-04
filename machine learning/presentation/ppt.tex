@@ -1,0 +1,176 @@
+\documentclass{ctexbeamer}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{subfig}
+\usepackage{graphicx}
+\usepackage[defaultmono,scale=0.85]{droidsansmono}
+\usepackage{tikz}
+\usepackage{minted}
+\usepackage{color}
+% \usepackage{mdframed}
+% \usepackage[colorlink=true,xetex]{hyperref}
+
+\usetheme{Madrid}
+\usefonttheme[onlymath]{serif}
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}
+\setCJKmonofont{WenQuanYi Micro Hei Mono}
+% \surroundwithmdframed{minted}
+
+\usetikzlibrary{graphdrawing, graphs, quotes, shapes}
+\usegdlibrary{trees}
+\tikzset{
+    noleaf/.style={draw,ellipse,fill=red!60},
+    ref/.style={draw,ellipse,fill=green!40},
+    normal/.style={draw,ellipse},
+    every picture/.style={}
+}
+
+\setminted{bgcolor=codebg,autogobble,breaklines}
+\setmintedinline{bgcolor=codebg}
+
+\newcommand{\theauthor}{Sparky\_14145}
+\newcommand{\theinst}{College of Software Engineering}
+\newcommand{\theshortinst}{CoSE}
+
+% \input{personal_info/info.tex}
+
+\author{\theauthor}
+\institute[\theshortinst]{\theinst}
+\title{线性规划与 LPBoost}
+
+\begin{document}
+    \begin{frame}
+        \titlepage
+    \end{frame}
+
+    \begin{frame}
+        \frametitle{目录}
+    
+        \tableofcontents
+    
+    \end{frame}
+
+    \section{简介}
+    \begin{frame}
+        \frametitle{简介}
+    
+        LPBoost 的基本思想是，通过将一系列的弱分类器 $h_j : \pmb{\chi} \to \{-1, 1\}$ 进行线性组合，得到一个强分类器 $f(\pmb{x})$，即：
+
+        \[
+            f(\pmb{x}) = \sum_{i=1}^{n} \alpha_i h_i(\pmb{x})
+        \] \pause
+
+        并且尝试最大化得到的强分类器 $f$ 的最小边界（margin）：
+
+        \[
+            \rho = \min_{k = 1,\ldots,m}\{\sum_{i=1}^n \alpha_i y_k h_i(\pmb{x}_k) \}
+        \] \pause
+
+        那么，该如何确定这里每个弱分类器的权重呢？\pause{}线性规划！
+    
+    \end{frame}
+
+    \section{线性规划}
+    \begin{frame}
+        \frametitle{线性规划}
+    
+        线性规划是一类数学问题，标准形式如下：
+
+        \begin{equation}
+            \begin{aligned}
+                \max\; & \pmb{c}^\mathrm{T}\pmb{x} \\
+                \mathrm{s.t.}\; & \pmb{Ax} \leq \pmb{b} \\
+                 & \pmb{x} \geq 0
+            \end{aligned}
+        \end{equation} \pause
+
+        其中 $\pmb{c}$ 是一个系数向量，$\pmb{x}$ 是带求的最优解，$\pmb{Ax} \leq \pmb{b}$ 则是各个约束式。
+    
+    \end{frame}
+
+    \begin{frame}
+        \frametitle{求解线性规划}
+        \framesubtitle{线性规划}
+    
+        求解线性规划的方法有很多：
+
+        \begin{enumerate}
+            \item 单纯形法；\pause
+            \item 内点法；\pause
+            \item 列构造法；\pause
+            \item 等等... \pause
+        \end{enumerate}
+
+        其中，出于效率原因， LPBoost 使用的是列构造法。\pause
+    
+    \end{frame}
+
+    \section{LPBoost}
+
+    \begin{frame}
+        \frametitle{LPBoost}
+        \framesubtitle{软边界 LPBoost}
+    
+        LPBoost 的线性规划问题看起来有一点像软边界支持向量机：
+
+        \begin{align*}
+            \min_{\pmb{\alpha,\xi},\rho} & -\!\!\rho + D \sum_{i=1}^m \xi_i & \\
+            \mathrm{s.t.} & \sum_{i=1}^n \alpha_i y_k h_i(\pmb{x}_k) + \xi_k \geq \rho, & k = 1,\ldots,m \\
+             & \sum_{i=1}^n \alpha_i = 1 & \\
+             & \xi_k \geq 0, \alpha_i \geq 0, \rho \in \mathbb{R} &
+        \end{align*} \pause
+
+        其中：$D$ 是需要在学习过程中手动调整的惩罚参数，$\pmb{\xi}$ 是松弛变量。
+    
+    \end{frame}
+
+    \begin{frame}
+    
+        实践中一般选取 $D = \frac{1}{m\nu}$，其中 $\nu \in (\frac{1}{m}, 1)$，$m$ 为训练集样本总数。此时参数 $\nu$ 会拥有一些性质：\pause
+
+        \begin{enumerate}
+            \item $\nu$ 是训练集分类错误比例的上界，即设 $k$ 表示分类错误的样本，则 $\frac{k}{m} \leq \nu$；\pause
+            \item $\nu$ 是分类边界上或边界外的训练样本比例的下界。
+        \end{enumerate} \pause
+
+        如果选择的 $\nu$ 得当，那么最优解所对应的权重向量 $\pmb{\alpha}$ 将会很稀疏，即只有一小部分弱分类器实际参与分类工作；且得到的模型只依赖训练样本中较小的子集，从而提高分类器的实际性能。
+    
+    \end{frame}
+
+    \section{扩展 LPBoost}
+    \subsection{硬边界}
+
+    \begin{frame}
+        \frametitle{扩展 LPBoost}
+        \framesubtitle{硬边界 LPBoost}
+
+        实际上如同支持向量机可以有软硬边界一般，LPBoost 也有软边界与硬边界之分。刚刚所介绍的 LPBoost 便是软边界，而硬边界 LPBoost 的线性规划问题如下：
+
+        \begin{align*}
+            \min_{\pmb{\alpha},\rho} & -\!\!\rho & \\
+            \mathrm{s.t.} & \sum_{i=1}^n \alpha_i y_k h_i(\pmb{x}_k) \geq \rho, & k = 1,\ldots,m \\
+             & \sum_{i=1}^n \alpha_i = 1, \alpha_i \geq 0, \rho \in \mathbb{R} &
+        \end{align*} \pause
+    \end{frame}
+
+    \begin{frame}
+
+        可以看出，硬边界 LPBoost 就是将软边界 LPBoost 的松弛变量去掉，使得约束条件强制要求所有的样本点都必须分类正确。\pause
+        
+        由于所有样本都分类正确，所以也不再需要向处于边界范围内的样本施加惩罚，故硬边界 LPBoost 的目标函数也就是简单的最小边界，即 $-\rho$。
+
+    \end{frame}
+
+    \subsection{LPBoost 优化回归}
+
+    \begin{frame}
+        \frametitle{LPBoost 优化回归}
+        \framesubtitle{Confidence-rated Boosting}
+    
+        在之前的叙述中，不难发现，LPBoost 的线性规划问题（以及，其求解过程）中并没有要求数据的标签 $y_i \in \{+1, -1\}$，故我们可以考虑通过修改线性规划问题，来使得 LPBoost 可以处理回归问题。\pause
+        
+        实际上，不仅仅是最小边界，LPBoost 可以被用于优化任何能被变形成线性规划问题的代价函数。
+    
+    \end{frame}
+
+\end{document}
